@@ -1,8 +1,9 @@
+import Stats from "@/components/restaurants/Stats"
 
 const Overview = () => {
   return (
-    <div>
-      over view 
+    <div >
+      <Stats/>
     </div>
   )
 }

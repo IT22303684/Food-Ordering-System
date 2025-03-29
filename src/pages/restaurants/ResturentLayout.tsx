@@ -19,10 +19,14 @@ const ResturentLayout = () => {
   }, [darkMode]);
 
   return (
-    <div className="font-sans">
+    <div className="font-sans min-h-screen">
       <Header toggleDarkMode={toggleDarkMode} darkMode={darkMode} toggleSidebar={toggleSidebar} />
       <Sidebar isSidebarOpen={isSidebarOpen} />
-      <main className="ml-64 pt-20">
+      <main
+        className={`transition-all duration-300 ease-in-out pt-20 ${
+          isSidebarOpen ? "ml-64" : "ml-0"
+        } sm:ml-64 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 min-h-screen`}
+      >
         <Outlet /> {/* This renders Profile, Overview, etc. */}
       </main>
     </div>
