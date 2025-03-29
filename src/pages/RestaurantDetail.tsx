@@ -7,7 +7,7 @@ import RestaurantInfo from "../components/Categories/RestaurantInfo";
 
 const RestaurantDetail: React.FC = () => {
   return (
-    <div>
+    <div className="w-full bg-gray-50">
       <Header />
       <Banner />
       <Categories />
