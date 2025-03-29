@@ -1,30 +1,57 @@
-const Menu: React.FC = () => {
-  const menuItems = [
-    { name: "Big Mac", desc: "Double beef, fresh lettuce", price: "$5.99", img: "/images/big-mac.jpg" },
-    { name: "Fries", desc: "Crispy golden fries", price: "$2.99", img: "/images/fries.jpg" },
-    { name: "Coke", desc: "Refreshing cola drink", price: "$1.99", img: "/images/coke.jpg" },
-  ];
+import React from 'react';
+import { Button } from '@/components/UI/Button';
 
-  return (
-    <section className="p-6">
-      <h2 className="text-3xl font-bold mb-4">Menu</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {menuItems.map((item, index) => (
-          <div key={index} className="bg-white shadow-md p-4 rounded-lg hover:shadow-lg">
-            <img
-              src={item.img}
-              alt={item.name}
-              className="w-full h-40 object-cover rounded-md mb-3"
-            />
-            <h3 className="text-xl font-bold">{item.name}</h3>
-            <p className="text-gray-500 mb-1">{item.desc}</p>
-            <p className="font-bold mb-3">{item.price}</p>
-            <button className="mt-2 w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Add</button>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
+const Menu: React.FC = () => {
+    const menuItems = [
+        {
+            category: 'Big Macs',
+            items: [
+                { name: 'Classic Big Mac', price: '$ 3.99', image: '/images/big-mac.jpg' },
+                { name: 'Double Big Mac', price: '$ 5.49', image: '/images/double-big-mac.jpg' },
+                { name: 'Spicy Big Mac', price: '$ 4.29', image: '/images/spicy-big-mac.jpg' }
+            ]
+        },
+        {
+            category: 'Fries',
+            items: [
+                { name: 'Classic Fries', price: '$ 1.49', image: '/images/fries.jpg' },
+                { name: 'Cheesy Fries', price: '$ 2.29', image: '/images/cheesy-fries.jpg' },
+                { name: 'Curly Fries', price: '$ 2.79', image: '/images/curly-fries.jpg' }
+            ]
+        },
+        {
+            category: 'Cold Drinks',
+            items: [
+                { name: 'Coke', price: '$ 1.29', image: '/images/coke.jpg' },
+                { name: 'Sprite', price: '$ 1.29', image: '/images/sprite.jpg' },
+                { name: 'Fanta', price: '$ 1.29', image: '/images/fanta.jpg' }
+            ]
+        }
+    ];
+
+    return (
+        <div className="p-6 space-y-10">
+            {menuItems.map((category) => (
+                <div key={category.category}>
+                    <h2 className="text-2xl font-bold mb-4">{category.category}</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                        {category.items.map((item) => (
+                            <div key={item.name} className="bg-white rounded-2xl shadow-md p-4">
+                                <img
+                                    src={item.image}
+                                    alt={item.name}
+                                    className="rounded-lg w-full h-40 object-cover mb-4"
+                                />
+                                <h3 className="text-lg font-semibold">{item.name}</h3>
+                                <p className="text-gray-500">{item.price}</p>
+                                <Button className="mt-4 w-full">Add to Cart</Button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
 };
 
 export default Menu;

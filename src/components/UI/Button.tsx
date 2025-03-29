@@ -1,56 +1,24 @@
 import React from "react";
-import classNames from "classnames";
+import { cn } from "@/lib/utils";
 
-interface Props {
-  title: string;
-  variant?: "primary" | "outline";
-  fitWidth?: boolean;
-  type?: "button" | "submit" | "reset";
-  onClick?: () => void;
-  icon?: React.ReactNode;
-  iconPosition?: "left" | "right";
-  isLoading?: boolean;
-  disabled?: boolean;
-  className?: string;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "primary" | "secondary";
 }
 
-const CustomButton = ({
-  title,
+export const Button: React.FC<ButtonProps> = ({
+  children,
   variant = "primary",
-  fitWidth = false,
-  type = "button",
-  onClick,
-  icon,
-  iconPosition = "right",
-  isLoading,
-  className,
-}: Props) => {
-  const buttonClasses = classNames(
-    "flex items-center justify-center px-6 py-3 text-sm font-medium transition-colors rounded-md",
-    className,
-    {
-      "bg-event-navy text-event-white hover:bg-event-charcoal":
-        variant === "primary",
-      "border border-event-navy text-event-navy hover:bg-event-navy hover:text-white":
-        variant === "outline",
-      "w-fit": fitWidth,
-      "w-full": !fitWidth,
-      "opacity-50 cursor-not-allowed": isLoading,
-    }
-  );
+  className = "",
+  ...props
+}) => {
+  const baseStyles = "px-4 py-2 rounded-lg font-bold text-white shadow-md transition-transform transform hover:scale-105";
+  const variantStyles = variant === "primary"
+    ? "bg-orange-500 hover:bg-orange-600"
+    : "bg-gray-300 hover:bg-gray-400 text-gray-700";
 
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={isLoading}
-      className={buttonClasses}
-    >
-      {icon && iconPosition === "left" && <span className="mr-2">{icon}</span>}
-      {!isLoading ? title : "Loading..."}
-      {icon && iconPosition === "right" && <span className="ml-2">{icon}</span>}
+    <button className={cn(baseStyles, variantStyles, className)} {...props}>
+      {children}
     </button>
   );
 };
-
-export default CustomButton;
