@@ -1,9 +1,9 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Layout from "./assets/fonts/Layout";
-import PaymentMethod from "./components/Payment/PaymentMethod";
-import CardDetails from './components/Payment/CardDetails';
-import OrderConfirmation from './pages/OrderConfirmation'; 
+import PaymentMethod from '@/components/Payment/PaymentMethod';
+import CardDetails from '@/components/Payment/CardDetails';
+import OrderConfirmation from '@/pages/OrderConfirmation';
 
 function App() {
   return (
@@ -12,9 +12,9 @@ function App() {
         <Route />
         <Route path="/" element={<Layout />}>
           <Route path="/" element={<Home />} />
-          <Route path="payment-method" element={<PaymentMethod />} />
+          <Route path="/payment-method" element={<PaymentMethod />} />
           <Route path="/card-details" element={<CardDetails />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />  {/* Define the route */}
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
         </Route>
       </Routes>
     </BrowserRouter>

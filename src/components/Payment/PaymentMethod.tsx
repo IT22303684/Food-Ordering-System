@@ -1,5 +1,6 @@
 // src/components/Payment/PaymentMethod.tsx
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/UI/card';
 import { Button } from '@/components/UI/Button';
 import { FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover } from 'react-icons/fa';
@@ -8,6 +9,7 @@ import { BsFillPersonFill } from 'react-icons/bs';
 
 const PaymentMethod = () => {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash');
+    const navigate = useNavigate();
     const [isOnlinePayment, setIsOnlinePayment] = useState(false);
     const [couponCode, setCouponCode] = useState('');
     const [tipAmount, setTipAmount] = useState(0);
@@ -15,7 +17,7 @@ const PaymentMethod = () => {
     const handlePaymentMethodChange = (method: string) => {
         setSelectedPaymentMethod(method);
         if (method === 'payOnline') {
-            setIsOnlinePayment(true);
+            navigate('/card-details');
         } else {
             setIsOnlinePayment(false);
         }
