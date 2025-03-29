@@ -1,11 +1,6 @@
-
-
-const Home = () => {
+function Home() {
   return (
-    <div>
-      hello
-    </div>
+    <div>Home</div>
   )
 }
-
 export default Home
