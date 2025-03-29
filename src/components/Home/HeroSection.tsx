@@ -7,7 +7,7 @@ function HeroSection() {
     <div
       className="relative min-h-screen bg-cover bg-center w-full flex items-center justify-center"
       style={{
-        backgroundImage: "url('public/home/hero.webp')",
+        backgroundImage: "url('/Home/hero.webp')",
       }}
     >
       {/* Dark overlay */}
