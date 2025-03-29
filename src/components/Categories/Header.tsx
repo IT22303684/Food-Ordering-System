@@ -3,7 +3,7 @@ import React from "react";
 const Header: React.FC = () => {
   return (
     <header className="flex justify-between items-center p-4 shadow-md bg-white w-full">
-      <h1 className="text-xl font-bold">Orders</h1>
+      <h1 className="text-xl font-bold">Categories</h1>
       <input
         type="text"
         placeholder="Search for food..."
