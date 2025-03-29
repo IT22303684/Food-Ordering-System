@@ -4,9 +4,10 @@ import { HiOutlineMenuAlt2 } from "react-icons/hi";
 interface HeaderProps {
     toggleDarkMode: () => void;
     darkMode: boolean;
+    toggleSidebar: () => void;
   }
 
-const Header = ({ toggleDarkMode, darkMode }: HeaderProps) => {
+const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
   
 
   return (
@@ -15,11 +16,11 @@ const Header = ({ toggleDarkMode, darkMode }: HeaderProps) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center justify-start rtl:justify-end">
             <button className="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:ring-gray-200 focus:outline-none focus:ring-2 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600  ">
-              <HiOutlineMenuAlt2 className="text-2xl" />
+              <HiOutlineMenuAlt2 className="text-2xl" onClick={toggleSidebar}/>
             </button>
             <a href="#" className="flex ms-2 md:me-24">
-              <span className="self-center text-xl font-semibold sm:text-2xl whitespace-nowrap dark:text-white">
-                RESTURENT NAME
+              <span className="self-center text-xl font-semibold sm:text-xl whitespace-nowrap dark:text-white">
+                Resturent Name
               </span>
             </a>
           </div>

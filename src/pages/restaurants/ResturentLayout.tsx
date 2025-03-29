@@ -1,8 +1,15 @@
 import Header from "@/components/restaurants/Header";
+import Sidebar from "@/components/restaurants/Sidebar";
 import { useState, useEffect } from "react";
 
 const ResturentLayout = () => {
   const [darkMode, setDarkMode] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Toggleside bar open function
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prevState) => !prevState);
+  };
 
   // Toggle dark mode function
   const toggleDarkMode = () => {
@@ -20,7 +27,12 @@ const ResturentLayout = () => {
 
   return (
     <div className="font-sans">
-      <Header toggleDarkMode={toggleDarkMode} darkMode={darkMode} />
+      <Header 
+        toggleDarkMode={toggleDarkMode} 
+        darkMode={darkMode} 
+        toggleSidebar={toggleSidebar}
+      />
+      <Sidebar isSidebarOpen={isSidebarOpen}/>
     </div>
   );
 };
