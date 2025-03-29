@@ -4,6 +4,7 @@ import Layout from "./assets/fonts/Layout";
 import PaymentMethod from "./components/Payment/PaymentMethod";
 import OrderSummary from "./components/Payment/OrderSummary";
 import CardDetails from './pages/CardDetails';
+import OrderConfirmation from './pages/OrderConfirmation'; 
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
           <Route path="payment-method" element={<PaymentMethod />} />
           <Route path="order-summary" element={<OrderSummary />} />
           <Route path="/card-details" element={<CardDetails />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />  {/* Define the route */}
         </Route>
       </Routes>
     </BrowserRouter>
