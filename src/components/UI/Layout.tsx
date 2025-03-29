@@ -1,6 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
-import Navbar from "../../components/UI/NavBar";
-import Footer from "../../components/UI/Footer";
+import Navbar from "./NavBar";
+import Footer from "./Footer";
 import { useEffect, useState } from "react";
 import { BounceLoader } from "react-spinners";
 import { Toaster } from "react-hot-toast";
@@ -27,7 +27,7 @@ function Layout() {
       {/* Loading Spinner */}
       {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-100 bg-opacity-20 backdrop-blur-md">
-          <BounceLoader size={50} color="#EE1133" />
+          <BounceLoader size={50} color="#ea580c" />
         </div>
       )}
 
@@ -37,7 +37,7 @@ function Layout() {
       </div>
 
       {/* Page Content */}
-      <main className="w-full mx-auto max-w-max">
+      <main className="w-full mx-auto max-w-[1920px]">
         <Outlet />
       </main>
 

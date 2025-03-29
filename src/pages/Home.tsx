@@ -1,6 +1,11 @@
+import HeroSection from "@/components/Home/HeroSection";
+
 function Home() {
   return (
-    <div>Home</div>
-  )
+    <div className="w-full">
+      <HeroSection />
+    </div>
+  );
 }
-export default Home
+
+export default Home;
