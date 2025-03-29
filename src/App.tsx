@@ -1,26 +1,31 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Layout from "./assets/fonts/Layout";
-import ResturentLayout from "./pages/restaurants/ResturentLayout"
 
+//-------------- resturent--------------------------------------
+import ResturentLayout from "./pages/restaurants/ResturentLayout";
+import Profile from "./pages/restaurants/Profile";
+import Overview from "./pages/restaurants/Overview";
 
 const ResturentRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<ResturentLayout />}>
+        <Route index element={<Navigate to="overview" replace />} /> {/* Relative path */}
+        <Route path="overview" element={<Overview />} />
+        <Route path="profile" element={<Profile />} />
+        {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>
   );
 };
 
-
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route />
         <Route path="/" element={<Layout />}>
-          <Route path="/" element={<Home />} />
+          <Route index element={<Home />} />
         </Route>
         <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />
       </Routes>

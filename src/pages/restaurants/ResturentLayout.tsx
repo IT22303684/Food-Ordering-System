@@ -1,3 +1,4 @@
+import { Outlet } from "react-router-dom";
 import Header from "@/components/restaurants/Header";
 import Sidebar from "@/components/restaurants/Sidebar";
 import { useState, useEffect } from "react";
@@ -6,17 +7,9 @@ const ResturentLayout = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Toggleside bar open function
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prevState) => !prevState);
-  };
+  const toggleSidebar = () => setIsSidebarOpen((prev) => !prev);
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
-  // Toggle dark mode function
-  const toggleDarkMode = () => {
-    setDarkMode((prevMode) => !prevMode);
-  };
-
-  // Sync dark mode with document class
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -27,12 +20,11 @@ const ResturentLayout = () => {
 
   return (
     <div className="font-sans">
-      <Header 
-        toggleDarkMode={toggleDarkMode} 
-        darkMode={darkMode} 
-        toggleSidebar={toggleSidebar}
-      />
-      <Sidebar isSidebarOpen={isSidebarOpen}/>
+      <Header toggleDarkMode={toggleDarkMode} darkMode={darkMode} toggleSidebar={toggleSidebar} />
+      <Sidebar isSidebarOpen={isSidebarOpen} />
+      <main className="ml-64 pt-20">
+        <Outlet /> {/* This renders Profile, Overview, etc. */}
+      </main>
     </div>
   );
 };
