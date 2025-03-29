@@ -1,10 +1,17 @@
 // PaymentMethod.tsx
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/UI/card';
 import { Button } from '@/components/UI/Button';
 import { FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover } from 'react-icons/fa';
 
 const PaymentMethod = () => {
+    const navigate = useNavigate();
+
+    const handlePayOnlineSelect = () => {
+        navigate('/card-details');
+    };
+
     return (
         <Card className="p-4">
             <h2 className="text-lg font-bold mb-4">PAYMENT METHOD</h2>
@@ -18,7 +25,10 @@ const PaymentMethod = () => {
                 <label className="flex items-center gap-2">
                     <input type="radio" name="payment" /> Call me back and I'll tell you my card details
                 </label>
-                <div className="border border-blue-500 rounded-lg p-2 bg-blue-50">
+                <div
+                    className="border border-blue-500 rounded-lg p-2 bg-blue-50"
+                    onClick={handlePayOnlineSelect}
+                >
                     <label className="flex items-center gap-2">
                         <input type="radio" name="payment" checked /> Pay online
                     </label>
