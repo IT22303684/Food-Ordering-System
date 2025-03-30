@@ -1,56 +1,56 @@
-import React from "react";
-import classNames from "classnames";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { IconType } from "react-icons";
 
-interface Props {
-  title: string;
-  variant?: "primary" | "outline";
-  fitWidth?: boolean;
-  type?: "button" | "submit" | "reset";
+interface ButtonProps {
+  to?: string;
   onClick?: () => void;
-  icon?: React.ReactNode;
-  iconPosition?: "left" | "right";
-  isLoading?: boolean;
-  disabled?: boolean;
+  children: React.ReactNode;
+  icon?: IconType;
+  variant?: "primary" | "secondary";
   className?: string;
 }
 
-const CustomButton = ({
-  title,
-  variant = "primary",
-  fitWidth = false,
-  type = "button",
-  onClick,
-  icon,
-  iconPosition = "right",
-  isLoading,
-  className,
-}: Props) => {
-  const buttonClasses = classNames(
-    "flex items-center justify-center px-6 py-3 text-sm font-medium transition-colors rounded-md",
-    className,
-    {
-      "bg-event-navy text-event-white hover:bg-event-charcoal":
-        variant === "primary",
-      "border border-event-navy text-event-navy hover:bg-event-navy hover:text-white":
-        variant === "outline",
-      "w-fit": fitWidth,
-      "w-full": !fitWidth,
-      "opacity-50 cursor-not-allowed": isLoading,
-    }
+const Button = ({ to, onClick, children, icon: Icon, variant = "primary", className = "" }: ButtonProps) => {
+  const baseStyles = "inline-flex items-center gap-2 px-8 py-3 rounded-lg text-lg font-semibold transition-all duration-300";
+  const variants = {
+    primary: "bg-orange-600 text-white hover:bg-orange-700 hover:scale-105",
+    secondary: "bg-white text-orange-600 hover:bg-gray-100 hover:scale-105"
+  };
+
+  const buttonContent = (
+    <>
+      {Icon && <Icon className="text-xl" />}
+      {children}
+    </>
   );
 
+  if (to) {
+    return (
+      <motion.div
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        <Link
+          to={to}
+          className={`${baseStyles} ${variants[variant]} ${className}`}
+        >
+          {buttonContent}
+        </Link>
+      </motion.div>
+    );
+  }
+
   return (
-    <button
-      type={type}
+    <motion.button
       onClick={onClick}
-      disabled={isLoading}
-      className={buttonClasses}
+      className={`${baseStyles} ${variants[variant]} ${className}`}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
     >
-      {icon && iconPosition === "left" && <span className="mr-2">{icon}</span>}
-      {!isLoading ? title : "Loading..."}
-      {icon && iconPosition === "right" && <span className="ml-2">{icon}</span>}
-    </button>
+      {buttonContent}
+    </motion.button>
   );
 };
 
-export default CustomButton;
+export default Button;
