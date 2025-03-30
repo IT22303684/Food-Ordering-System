@@ -7,6 +7,9 @@ import PaymentMethod from '@/components/Payment/PaymentMethod';
 import CardDetails from '@/components/Payment/CardDetails';
 import OrderConfirmation from '@/pages/OrderConfirmation';
 
+import Order from "./pages/Order";
+import Cart from "./pages/Cart";
+import Layout from "./assets/fonts/Layout";
 
 function App() {
   return (
@@ -19,7 +22,8 @@ function App() {
           <Route path="/payment-method" element={<PaymentMethod />} />
           <Route path="/card-details" element={<CardDetails />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
-
+          <Route path="order" element={<Order />} />
+          <Route path="cart" element={<Cart />} /> 
         </Route>
       </Routes>
     </BrowserRouter>
