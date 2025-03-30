@@ -5,8 +5,6 @@ import { FcGoogle } from "react-icons/fc";
 import toast, { Toaster } from "react-hot-toast";
 import CustomButton from "@/components/UI/CustomButton";
 
-
-
 function SignIn() {
   const navigate = useNavigate();
   const [passwordVisible, setPasswordVisible] = useState(false);
@@ -84,11 +82,11 @@ function SignIn() {
         />
       </div>
 
-
       {/* Form Section */}
       <div className="flex w-full flex-col px-[20px] pt-[20px] sm:px-[30px] sm:pt-[30px] md:px-20 lg:w-[45%] lg:px-[60px] lg:pt-[80px] 2xl:px-[165px] 2xl:pt-[154px]">
-        <div className="hidden w-full lg:block">
-          
+        {/* Logo - Visible on all screens */}
+        <div className="w-full mb-4 hidden lg:block">
+          <span className="text-4xl font-bold text-orange-600">FoodyX</span>
         </div>
 
         {/* Sign In Section */}

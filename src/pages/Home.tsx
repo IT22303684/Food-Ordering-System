@@ -5,7 +5,7 @@ import ReviewsSection from "@/components/Home/ReviewsSection";
 
 function Home() {
   return (
-    <div className="w-full">
+    <div className="w-full overflow-hidden">
       <HeroSection />
       <RestaurantsSection />
       <DeliverySection />

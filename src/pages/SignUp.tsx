@@ -96,7 +96,6 @@ function SignUp() {
     <div className="mx-auto mt-20 lg:mt-0 flex w-full max-w-[1920px] flex-col lg:flex-row">
       <Toaster position="top-right" reverseOrder={false} />
 
-      {/* Laptop Image */}
       <div className="hidden lg:block lg:w-[55%]">
         <img
           src="./Signup/Signupbg.webp"
@@ -108,9 +107,11 @@ function SignUp() {
 
       {/* Form Section */}
       <div className="flex w-full flex-col px-[20px] pt-[20px] sm:px-[30px] sm:pt-[30px] md:px-20 lg:w-[45%] lg:px-[60px] lg:pt-[80px] 2xl:px-[165px] 2xl:pt-[154px]">
-        <div className="hidden w-full lg:block">
-          {/* <img src={logo} alt="logo" className="h-[54px] w-[202px]" /> */}
+        {/* Logo - Visible on all screens */}
+        <div className="w-full mb-4 hidden lg:block">
+          <span className="text-4xl font-bold text-orange-600">FoodyX</span>
         </div>
+
 
         {/* Sign Up Section */}
         <div className="flex w-full flex-col lg:mt-10">
