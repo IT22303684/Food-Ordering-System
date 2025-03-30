@@ -1,6 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
-import Layout from "./assets/fonts/Layout";
+import Layout from "./components/UI/Layout";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 
 //-------------- resturent--------------------------------------
 import ResturentLayout from "./pages/restaurants/ResturentLayout";
@@ -51,7 +53,11 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
+
+          <Route path="/" element={<Home />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
+
         </Route>
         <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />
       </Routes>
