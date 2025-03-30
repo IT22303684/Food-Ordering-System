@@ -1,6 +1,6 @@
 // CardDetails.tsx
 import React, { useState } from 'react';
-import { Button } from '@/components/UI/Button';
+import { Button } from './Button';
 import { useNavigate } from 'react-router-dom';  // Importing useNavigate from react-router-dom
 import { FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover } from 'react-icons/fa';  // Importing credit card icons
 

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/UI/card';
-import { Button } from '@/components/UI/Button';
+import { Button } from './Button';
 import { FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover } from 'react-icons/fa';
 import { FiShoppingCart, FiInfo } from 'react-icons/fi';
 import { BsFillPersonFill } from 'react-icons/bs';
