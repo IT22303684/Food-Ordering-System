@@ -6,6 +6,7 @@ import Layout from "./assets/fonts/Layout";
 import ResturentLayout from "./pages/restaurants/ResturentLayout";
 import Profile from "./pages/restaurants/Profile";
 import Overview from "./pages/restaurants/Overview";
+import NewOrder from "./pages/restaurants/NewOrder";
 
 const ResturentRoutes = () => {
   return (
@@ -14,6 +15,10 @@ const ResturentRoutes = () => {
         <Route index element={<Navigate to="overview" replace />} /> {/* Relative path */}
         <Route path="overview" element={<Overview />} />
         <Route path="profile" element={<Profile />} />
+        {/* order routes */}
+        <Route path="orders/new" element={<NewOrder />} />
+
+        
         {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>
