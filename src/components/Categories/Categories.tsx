@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "@/components/UI/Button";
+import { Button } from "./Button";
 import { Icon } from "@/components/UI/Icon";
 
 const categories = [
