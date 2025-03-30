@@ -1,6 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Home from "./pages/Home";
 import Layout from "./components/UI/Layout";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
 import RestaurantDetail from "./pages/RestaurantDetail";
 
 function App() {
@@ -9,6 +11,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/categories" element={<RestaurantDetail />} />
         </Route>
       </Routes>
