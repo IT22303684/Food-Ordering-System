@@ -13,7 +13,7 @@ function DeliverySection() {
           className="relative"
         >
           <motion.img
-            src="/Home/delivery-boy.webp" 
+            src="/Home/delivery-boy.png" 
             alt="Delivery Service"
             className="w-full h-auto max-w-lg mx-auto"
             animate={{
