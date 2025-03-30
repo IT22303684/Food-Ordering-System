@@ -1,41 +1,56 @@
-// Button.tsx
-import React from 'react';
-import { cn } from '@/lib/utils';
+import React from "react";
+import classNames from "classnames";
 
-type ButtonProps = {
-    children: React.ReactNode;
-    variant?: 'primary' | 'secondary' | 'outline';
-    className?: string;
-    onClick?: () => void;
-    disabled?: boolean;
-    type?: 'button' | 'submit' | 'reset';
-};
+interface Props {
+  title: string;
+  variant?: "primary" | "outline";
+  fitWidth?: boolean;
+  type?: "button" | "submit" | "reset";
+  onClick?: () => void;
+  icon?: React.ReactNode;
+  iconPosition?: "left" | "right";
+  isLoading?: boolean;
+  disabled?: boolean;
+  className?: string;
+}
 
-export const Button = ({
-    children,
-    variant = 'primary',
+const CustomButton = ({
+  title,
+  variant = "primary",
+  fitWidth = false,
+  type = "button",
+  onClick,
+  icon,
+  iconPosition = "right",
+  isLoading,
+  className,
+}: Props) => {
+  const buttonClasses = classNames(
+    "flex items-center justify-center px-6 py-3 text-sm font-medium transition-colors rounded-md",
     className,
-    onClick,
-    disabled = false,
-    type = 'button',
-}: ButtonProps) => {
-    const baseStyles = 'px-4 py-2 rounded-lg font-semibold transition-all';
-    const variantStyles = {
-        primary: 'bg-orange-500 text-white hover:bg-orange-600',
-        secondary: 'bg-gray-200 text-black hover:bg-gray-300',
-        outline: 'border border-orange-500 text-orange-500 hover:bg-orange-100',
-    };
+    {
+      "bg-event-navy text-event-white hover:bg-event-charcoal":
+        variant === "primary",
+      "border border-event-navy text-event-navy hover:bg-event-navy hover:text-white":
+        variant === "outline",
+      "w-fit": fitWidth,
+      "w-full": !fitWidth,
+      "opacity-50 cursor-not-allowed": isLoading,
+    }
+  );
 
-    return (
-        <button
-            type={type}
-            onClick={onClick}
-            disabled={disabled}
-            className={cn(baseStyles, variantStyles[variant], className, {
-                'opacity-50 cursor-not-allowed': disabled,
-            })}
-        >
-            {children}
-        </button>
-    );
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={isLoading}
+      className={buttonClasses}
+    >
+      {icon && iconPosition === "left" && <span className="mr-2">{icon}</span>}
+      {!isLoading ? title : "Loading..."}
+      {icon && iconPosition === "right" && <span className="ml-2">{icon}</span>}
+    </button>
+  );
 };
+
+export default CustomButton;
