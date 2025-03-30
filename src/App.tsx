@@ -31,7 +31,7 @@ const ResturentRoutes = () => {
             <Route path="canceled" element={<CancelledOrder />} />
         </Route>
 
-        {/* Order-related routes grouped under /orders */}
+        {/* menu-related routes grouped under /menu-management */}
         <Route path="menu-management">
             <Route path="all" element={<AllItem />} />
             <Route path="add" element={<AddNewItem />} />
