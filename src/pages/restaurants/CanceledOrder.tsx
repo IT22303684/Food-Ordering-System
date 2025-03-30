@@ -55,7 +55,7 @@ import ResturentTitle from "../../components/UI/ResturentTitle";
 const CancelledOrder = () => {
   return (
     <div className='p-4'>
-        <ResturentTitle text="Cancelled Orders"/>
+        <ResturentTitle text="Canceled Orders"/>
         <ResturentTable headers={tableHeaders} data={orderData} />
     </div>
   )

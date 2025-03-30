@@ -10,7 +10,9 @@ import NewOrder from "./pages/restaurants/NewOrder";
 import PreparingOrder from "./pages/restaurants/PreparingOrder";
 import ReadyOrder from "./pages/restaurants/ReadyOrder";
 import CompleteOrder from "./pages/restaurants/CompleteOrder";
-import CancelledOrder from "./pages/restaurants/CancelledOrder";
+import CancelledOrder from "./pages/restaurants/CanceledOrder";
+import AllItem from "./pages/restaurants/AllItem";
+import AddNewItem from "./pages/restaurants/AddNewItem";
 
 const ResturentRoutes = () => {
   return (
@@ -19,12 +21,21 @@ const ResturentRoutes = () => {
         <Route index element={<Navigate to="overview" replace />} /> {/* Relative path */}
         <Route path="overview" element={<Overview />} />
         <Route path="profile" element={<Profile />} />
-        {/* order routes */}
-        <Route path="orders/new" element={<NewOrder />} />
-        <Route path="orders/preparing" element={<PreparingOrder />} />
-        <Route path="orders/ready" element={<ReadyOrder />} />
-        <Route path="orders/completed" element={<CompleteOrder />} />
-        <Route path="orders/canceled" element={<CancelledOrder />} />
+
+        {/* Order-related routes grouped under /orders */}
+        <Route path="orders">
+            <Route path="new" element={<NewOrder />} />
+            <Route path="preparing" element={<PreparingOrder />} />
+            <Route path="ready" element={<ReadyOrder />} />
+            <Route path="completed" element={<CompleteOrder />} />
+            <Route path="canceled" element={<CancelledOrder />} />
+        </Route>
+
+        {/* Order-related routes grouped under /orders */}
+        <Route path="menu-management">
+            <Route path="all" element={<AllItem />} />
+            <Route path="add" element={<AddNewItem />} />
+        </Route>
 
         
 
