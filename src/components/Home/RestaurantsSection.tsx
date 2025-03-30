@@ -86,7 +86,7 @@ const RestaurantCard = ({ restaurant }: { restaurant: Restaurant }) => {
 
 function RestaurantsSection() {
   return (
-    <section className="py-16 bg-gradient-to-b from-gray-50 to-gray-200">
+    <section className="py-16 w-full bg-gradient-to-b from-gray-50 to-gray-200">
       <div className="max-w-7xl mx-auto px-4 mb-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

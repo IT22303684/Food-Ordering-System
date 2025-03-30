@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 
 function DeliverySection() {
   return (
-    <section className="py-20 bg-white">
+    <section className="py-20 w-full bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-12 items-center">
         {/* Left side - Animated Illustration */}
         <motion.div
