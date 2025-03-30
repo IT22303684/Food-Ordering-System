@@ -1,56 +1,24 @@
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { IconType } from "react-icons";
+import React from "react";
+import { cn } from "@/lib/utils";
 
-interface ButtonProps {
-  to?: string;
-  onClick?: () => void;
-  children: React.ReactNode;
-  icon?: IconType;
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary";
-  className?: string;
 }
 
-const Button = ({ to, onClick, children, icon: Icon, variant = "primary", className = "" }: ButtonProps) => {
-  const baseStyles = "inline-flex items-center gap-2 px-8 py-3 rounded-lg text-lg font-semibold transition-all duration-300";
-  const variants = {
-    primary: "bg-orange-600 text-white hover:bg-orange-700 hover:scale-105",
-    secondary: "bg-white text-orange-600 hover:bg-gray-100 hover:scale-105"
-  };
-
-  const buttonContent = (
-    <>
-      {Icon && <Icon className="text-xl" />}
-      {children}
-    </>
-  );
-
-  if (to) {
-    return (
-      <motion.div
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <Link
-          to={to}
-          className={`${baseStyles} ${variants[variant]} ${className}`}
-        >
-          {buttonContent}
-        </Link>
-      </motion.div>
-    );
-  }
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = "primary",
+  className = "",
+  ...props
+}) => {
+  const baseStyles = "px-4 py-2 rounded-lg font-bold text-white shadow-md transition-transform transform hover:scale-105";
+  const variantStyles = variant === "primary"
+    ? "bg-orange-500 hover:bg-orange-600"
+    : "bg-gray-300 hover:bg-gray-400 text-gray-700";
 
   return (
-    <motion.button
-      onClick={onClick}
-      className={`${baseStyles} ${variants[variant]} ${className}`}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      {buttonContent}
-    </motion.button>
+    <button className={cn(baseStyles, variantStyles, className)} {...props}>
+      {children}
+    </button>
   );
 };
-
-export default Button;
