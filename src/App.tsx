@@ -9,6 +9,8 @@ import OrderConfirmation from '@/pages/OrderConfirmation';
 
 import Order from "./pages/Order";
 import Cart from "./pages/Cart";
+import ResturentRegister from "./pages/ResturentRegister";
+
 
 
 //-------------- resturent--------------------------------------
@@ -63,6 +65,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/resturent-signup" element={<ResturentRegister />} />
           <Route path="/payment-method" element={<PaymentMethod />} />
           <Route path="/card-details" element={<CardDetails />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
