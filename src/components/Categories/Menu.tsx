@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from './Button';
+import { motion } from 'framer-motion';
 
 const Menu: React.FC = () => {
     const menuItems = [
@@ -32,23 +33,34 @@ const Menu: React.FC = () => {
     return (
         <div className="p-6 space-y-10">
             {menuItems.map((category) => (
-                <div key={category.category}>
-                    <h2 className="text-2xl font-bold mb-4">{category.category}</h2>
+                <motion.div
+                    key={category.category}
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <h2 className="text-2xl font-bold mb-4 text-gray-800">{category.category}</h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                         {category.items.map((item) => (
-                            <div key={item.name} className="bg-white rounded-2xl shadow-md p-4">
-                                <img
-                                    src={item.image}
-                                    alt={item.name}
-                                    className="rounded-lg w-full h-40 object-cover mb-4"
-                                />
-                                <h3 className="text-lg font-semibold">{item.name}</h3>
+                            <motion.div
+                                key={item.name}
+                                whileHover={{ scale: 1.05 }}
+                                className="bg-white rounded-2xl shadow-lg transition-shadow p-4 hover:shadow-xl"
+                            >
+                                <div className="h-40 w-full overflow-hidden rounded-lg mb-4">
+                                    <img
+                                        src={item.image}
+                                        alt={item.name}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-800">{item.name}</h3>
                                 <p className="text-gray-500">{item.price}</p>
                                 <Button className="mt-4 w-full">Add to Cart</Button>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
-                </div>
+                </motion.div>
             ))}
         </div>
     );
