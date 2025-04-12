@@ -11,6 +11,33 @@ import Order from "./pages/Order";
 import Cart from "./pages/Cart";
 import ResturentRegister from "./pages/ResturentRegister";
 
+//-------------- admin--------------------------------------
+import AdminLayout from "./pages/admin/AdminLayout";
+import AllResturent from "./pages/admin/AllResturent";
+import RequestResturent from "./pages/admin/RequestResturent";
+import AddResturent from "./pages/admin/AddResturent";
+
+const AdminRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<AdminLayout />}>
+        <Route index element={<Navigate to="overview" replace />} /> {/* Relative path */}
+        <Route path="overview" element={<Overview />} />
+        <Route path="profile" element={<Profile />} />
+
+        {/* Order-related routes grouped under /orders */}
+        <Route path="resturent">
+            <Route path="" element={<AllResturent />} />
+            <Route path="request" element={<RequestResturent />} />
+            <Route path="add" element={<AddResturent />} />
+        </Route>
+
+        {/* Add more routes as needed to match sidebar */}
+
+      </Route>
+    </Routes>
+  );
+};
 
 
 //-------------- resturent--------------------------------------
@@ -73,6 +100,7 @@ function App() {
           <Route path="cart" element={<Cart />} /> 
         </Route>
         <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />
+        <Route path="/admin-dashboard/*" element={<AdminRoutes />} />
       </Routes>
     </BrowserRouter>
   );
