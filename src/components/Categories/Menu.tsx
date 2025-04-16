@@ -7,25 +7,25 @@ const menu = [
   {
     section: "Big Macs",
     items: [
-      { name: "Classic Big Mac", price: "$3.99", img: "/images/fanta.jpg" },
-      { name: "Double Big Mac", price: "$5.49", img: "/images/fanta.jpg" },
-      { name: "Spicy Big Mac", price: "$4.29", img: "/images/fanta.jpg" },
+      { name: "Classic Big Mac", price: "$3.99", img: "./assets/images/Classic_Big_Mac.jpg" },
+      { name: "Double Big Mac", price: "$5.49", img: "./assets/images/Double_Big_Mac.jpg"},
+      { name: "Spicy Big Mac", price: "$4.29", img: "./assets/images/Spicy_Big_Mac.jpg" },
     ],
   },
   {
     section: "Fries",
     items: [
-      { name: "Classic Fries", price: "$1.49", img: "/images/fanta.jpg" },
-      { name: "Cheesy Fries", price: "$2.29", img: "/images/fanta.jpg" },
-      { name: "Curly Fries", price: "$2.79", img: "/images/fanta.jpg" },
+      { name: "Classic Fries", price: "$1.49", img: "/assets/images/Classic_Fries.jpg" },
+      { name: "Cheesy Fries", price: "$2.29", img: "/assets/images/Cheesy_Fries.jpg" },
+      { name: "Curly Fries", price: "$2.79", img: "./assets/images/Curly_Fries.jpg" },
     ],
   },
   {
     section: "Cold Drinks",
     items: [
-      { name: "Coke", price: "$1.29", img: "/images/coke.jpg" },
-      { name: "Sprite", price: "$1.29", img: "/images/sprite.jpg" },
-      { name: "Fanta", price: "$1.29", img: "/images/fanta.jpg" },
+      { name: "Coke", price: "$1.29", img: "./assets/images/Coke.jpg" },
+      { name: "Sprite", price: "$1.29", img: "./assets/images/Sprite.jpg" },
+      { name: "Fanta", price: "$1.29", img: "./assets/images/Fanta.jpg" },
     ],
   },
 ];
@@ -71,7 +71,7 @@ const Menu: React.FC = () => (
               <motion.img
                 src={item.img}
                 alt={item.name}
-                className="w-40 h-28 object-cover rounded mb-2"
+                className="w-60 h-48 object-cover rounded mb-2"
                 initial={{ scale: 0.95, opacity: 0.8 }}
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
