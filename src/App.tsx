@@ -51,6 +51,7 @@ import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
 import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
+import RestaurantDetail from "./pages/RestaurantDetail";
 
 const ResturentRoutes = () => {
   return (
@@ -98,6 +99,7 @@ function App() {
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="order" element={<Order />} />
           <Route path="cart" element={<Cart />} /> 
+          <Route path="categories" element={<RestaurantDetail />} /> 
         </Route>
         <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />
         <Route path="/admin-dashboard/*" element={<AdminRoutes />} />
