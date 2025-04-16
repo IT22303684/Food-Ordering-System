@@ -2,19 +2,20 @@ import React from "react";
 import Header from "../components/Categories/Header";
 import Banner from "../components/Categories/Banner";
 import Categories from "../components/Categories/Categories";
-import Menu from "../components/Categories/Menu";
 import RestaurantInfo from "../components/Categories/RestaurantInfo";
+import Menu from "../components/Categories/Menu";
 
-const RestaurantDetail: React.FC = () => {
-  return (
-    <div className="w-full bg-gray-50">
-      <Header />
-      <Banner />
+const RestaurantDetail: React.FC = () => (
+  <div className="w-full bg-gray-50 min-h-screen flex flex-col">
+    <Header />
+    <Banner />
+    <main className="container mx-auto px-4 py-8 flex-1">
       <Categories />
       <Menu />
       <RestaurantInfo />
-    </div>
-  );
-};
+      
+    </main>
+  </div>
+);
 
 export default RestaurantDetail;

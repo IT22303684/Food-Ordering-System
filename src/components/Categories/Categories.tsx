@@ -1,30 +1,25 @@
 import React from "react";
-import { Button } from "./Button";
-import { Icon } from "@/components/UI/Icon";
 
 const categories = [
-  { name: "Offers", icon: "local_offer" },
-  { name: "Burgers", icon: "lunch_dining" },
-  { name: "Fries", icon: "restaurant" },
-  { name: "Snacks", icon: "fastfood" },
-  { name: "Cold Drinks", icon: "local_cafe" },
-  { name: "Desserts", icon: "icecream" },
+  "local_offer",
+  "lunch_dining",
+  "restaurant",
+  "fastfood",
+  "local_cafe",
+  "icecream",
 ];
 
-const Categories: React.FC = () => {
-  return (
-    <div className="flex flex-wrap justify-center gap-4 p-6 bg-gray-100">
-      {categories.map((category, index) => (
-        <Button
-          key={index}
-          className="bg-white shadow-md px-4 py-3 rounded-lg flex items-center gap-2 w-full sm:w-1/2 md:w-1/3 lg:w-1/4 border hover:bg-orange-500 hover:text-white"
-        >
-          <Icon name={category.icon} size="20px" />
-          {category.name}
-        </Button>
-      ))}
-    </div>
-  );
-};
+const Categories: React.FC = () => (
+  <div className="flex flex-wrap gap-4 justify-center bg-gray-100 py-4 rounded-lg shadow mb-6">
+    {categories.map((cat) => (
+      <div
+        key={cat}
+        className="bg-white px-6 py-2 rounded-full shadow text-gray-700 font-medium cursor-pointer hover:bg-orange-100 transition"
+      >
+        {cat}
+      </div>
+    ))}
+  </div>
+);
 
 export default Categories;

@@ -1,23 +1,15 @@
 import React from "react";
 
-const Header: React.FC = () => {
-  return (
-    <header className="flex justify-between items-center p-4 shadow-md bg-white w-full">
-      <h1 className="text-xl font-bold">Categories</h1>
-      <input
-        type="text"
-        placeholder="Search for food..."
-        className="border rounded-lg px-3 py-1 w-full md:w-1/3"
-      />
-      <div className="flex items-center space-x-4">
-        <span className="material-icons cursor-pointer">person</span>
-        <span className="relative cursor-pointer">
-          <span className="material-icons">shopping_cart</span>
-          <span className="absolute top-0 right-0 bg-red-500 text-white text-xs px-1 rounded-full">1</span>
-        </span>
-      </div>
-    </header>
-  );
-};
+const Header: React.FC = () => (
+  <header className="w-full bg-white shadow flex items-center justify-between px-8 py-4">
+    <div className="text-2xl font-bold text-orange-600">FoodyX</div>
+    <nav className="flex gap-8 items-center">
+      <a href="#" className="text-gray-700 hover:text-orange-500">Menu</a>
+      <a href="#" className="text-gray-700 hover:text-orange-500">My Orders</a>
+      <a href="#" className="text-gray-700 hover:text-orange-500">Cart</a>
+      <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded font-semibold">Sign In</button>
+    </nav>
+  </header>
+);
 
 export default Header;
