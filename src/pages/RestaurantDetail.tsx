@@ -1,9 +1,9 @@
 import React from "react";
-import Header from "../components/Categories/Header";
-import Banner from "../components/Categories/Banner";
-import Categories from "../components/Categories/Categories";
-import RestaurantInfo from "../components/Categories/RestaurantInfo";
-import Menu from "../components/Categories/Menu";
+import Header from "../components/Restaurant Menu/Header";
+import Banner from "../components/Restaurant Menu/Banner";
+import Categories from "../components/Restaurant Menu/Categories";
+import RestaurantInfo from "../components/Restaurant Menu/RestaurantInfo";
+import Menu from "../components/Restaurant Menu/Menu";
 
 const RestaurantDetail: React.FC = () => (
   <div className="w-full bg-gray-50 min-h-screen flex flex-col">
