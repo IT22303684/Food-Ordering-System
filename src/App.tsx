@@ -100,7 +100,7 @@ function App() {
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/orders" element={<Order />} />
           <Route path="/cart" element={<Cart />} /> 
-          <Route path="restaurant-menu" element={<RestaurantMenu />} /> 
+          <Route path="/restaurant/:restaurantId" element={<RestaurantMenu />} /> 
           <Route path="menu" element={<FoodHomePage />} /> 
         </Route>
         <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />

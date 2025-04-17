@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 
+
 // Sample Data
 const categories = [
   { label: "All", icon: "🍔" },
@@ -22,7 +23,7 @@ const allFoods = [
   // Example food items
   {
     id: 1,
-    name: "Coffee By Urban Garden",
+    name: "Cappuccino",
     img: "../assets/images/coffee.jpg",
     price: 3.8,
     delivery: 39,
@@ -31,10 +32,12 @@ const allFoods = [
     bestSale: false,
     category: "Street Food",
     offer: "30% off (up to LKR 600)",
+    restaurant: "Coffee By Urban Garden",
+    restaurantId: "urban-garden",
   },
   {
     id: 2,
-    name: "Ceylon Spices Food",
+    name: "Rice & Curry",
     img: "../assets/images/spices.jpg",
     price: 4.0,
     delivery: 99,
@@ -43,10 +46,11 @@ const allFoods = [
     bestSale: true,
     category: "Grocery",
     offer: "Buy 1, Get 1 Free",
+    restaurant: "Ceylon Spices Food",
   },
   {
     id: 3,
-    name: "Ceyld",
+    name: "Ice Cream",
     img: "../assets/images/Ice Cream.jpg",
     price: 4.0,
     delivery: 99,
@@ -55,6 +59,7 @@ const allFoods = [
     bestSale: true,
     category: "Ice Cream",
     offer: "Buy 1, Get 1 Free",
+    restaurant: "Creamy Delights",
   },
   {
     id: 4,
@@ -67,10 +72,11 @@ const allFoods = [
     bestSale: true,
     category: "Street Food",
     offer: "Buy 1, Get 1 Free",
+    restaurant: "Pasta House",
   },
   {
     id: 5,
-    name: "shot-white-plate-full-fried-chicken",
+    name: "Fried Chicken Wings",
     img: "../assets/images/Wings.jpg",
     price: 4.0,
     delivery: 99,
@@ -79,6 +85,7 @@ const allFoods = [
     bestSale: true,
     category: "Wings",
     offer: "Buy 1, Get 1 Free",
+    restaurant: "Wing Factory",
   },
   // ...add more items
 ];
@@ -116,16 +123,11 @@ export default function FoodHomePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24">
-      {/* Top Bar */}
-      <div className="bg-black text-white px-4 py-2 flex items-center justify-between">
-        <div className="font-semibold">Low Battery</div>
-        <div className="flex items-center gap-2">
-          <span className="text-red-500 font-bold">10%</span>
-          <div className="w-16 h-4 bg-gray-700 rounded-full overflow-hidden">
-            <div className="h-4 bg-red-500" style={{ width: "40%" }} />
-          </div>
-        </div>
-      </div>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+     
 
       {/* Search Bar */}
       <div className="px-4 py-3 bg-white">
@@ -266,35 +268,39 @@ export default function FoodHomePage() {
       <section className="px-4 mt-8">
         <h2 className="font-bold text-xl mb-3">All Foods</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {filteredFoods.map((food, i) => (
+        {filteredFoods.map((food, i) => (
             <motion.div
-              key={food.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden"
-              custom={i}
-              initial="hidden"
-              whileInView="visible"
-              whileHover="hover"
-              viewport={{ once: true, amount: 0.2 }}
-              variants={cardVariants}
+                key={food.id}
+                className="bg-white rounded-xl shadow-lg overflow-hidden"
+                custom={i}
+                initial="hidden"
+                whileInView="visible"
+                whileHover="hover"
+                viewport={{ once: true, amount: 0.2 }}
+                variants={cardVariants}
             >
-              <img src={food.img} alt={food.name} className="w-full h-32 object-cover" />
-              <div className="p-3">
+                <img src={food.img} alt={food.name} className="w-full h-32 object-cover" />
+                <div className="p-3">
                 <div className="font-semibold">{food.name}</div>
+                <div className="text-sm text-gray-500 mb-1">{food.restaurant}</div> {/* Restaurant name here */}
                 <div className="text-gray-500 text-xs flex items-center gap-2">
-                  <span>₳{food.delivery} Delivery Fee</span>
-                  <span>·</span>
-                  <span>{food.time} min</span>
+                    <span>₳{food.delivery} Delivery Fee</span>
+                    <span>·</span>
+                    <span>{food.time} min</span>
                 </div>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-yellow-500">★</span>
-                  <span className="text-sm font-semibold">{food.price}</span>
+                    <span className="text-yellow-500">★</span>
+                    <span className="text-sm font-semibold">{food.price}</span>
                 </div>
                 {food.offer && (
-                  <div className="mt-2 inline-block bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold">{food.offer}</div>
+                    <div className="mt-2 inline-block bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-bold">
+                    {food.offer}
+                    </div>
                 )}
-              </div>
+                </div>
             </motion.div>
-          ))}
+            ))}
+            
         </div>
       </section>
     </div>
