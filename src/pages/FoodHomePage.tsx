@@ -44,6 +44,42 @@ const allFoods = [
     category: "Grocery",
     offer: "Buy 1, Get 1 Free",
   },
+  {
+    id: 3,
+    name: "Ceyld",
+    img: "../assets/images/Ice Cream.jpg",
+    price: 4.0,
+    delivery: 99,
+    time: 25,
+    featured: true,
+    bestSale: true,
+    category: "Ice Cream",
+    offer: "Buy 1, Get 1 Free",
+  },
+  {
+    id: 4,
+    name: "Pasta",
+    img: "../assets/images/pasta.jpg",
+    price: 4.0,
+    delivery: 99,
+    time: 25,
+    featured: true,
+    bestSale: true,
+    category: "Street Food",
+    offer: "Buy 1, Get 1 Free",
+  },
+  {
+    id: 5,
+    name: "shot-white-plate-full-fried-chicken",
+    img: "../assets/images/Wings.jpg",
+    price: 4.0,
+    delivery: 99,
+    time: 25,
+    featured: true,
+    bestSale: true,
+    category: "Wings",
+    offer: "Buy 1, Get 1 Free",
+  },
   // ...add more items
 ];
 
@@ -156,7 +192,7 @@ export default function FoodHomePage() {
 
       {/* Featured Section */}
       <section className="px-4 mt-6">
-        <h2 className="font-bold text-xl mb-3">Featured on Uber Eats</h2>
+        <h2 className="font-bold text-xl mb-3">Featured on FoodyX</h2>
         <div className="flex gap-4 overflow-x-auto pb-2">
           {featuredFoods.map((food, i) => (
             <motion.div
