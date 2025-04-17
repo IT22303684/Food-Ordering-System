@@ -51,7 +51,7 @@ import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
 import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
-import RestaurantDetail from "./pages/RestaurantDetail";
+import RestaurantDetail from "./pages/RestaurantMenu";
 
 const ResturentRoutes = () => {
   return (

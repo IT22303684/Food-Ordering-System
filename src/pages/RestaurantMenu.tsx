@@ -1,7 +1,7 @@
 import React from "react";
 import Header from "../components/Restaurant Menu/Header";
 import Banner from "../components/Restaurant Menu/Banner";
-import Categories from "../components/Restaurant Menu/Categories";
+import Categories from "../components/Restaurant Menu/ResturentCategories";
 import RestaurantInfo from "../components/Restaurant Menu/RestaurantInfo";
 import Menu from "../components/Restaurant Menu/Menu";
 
