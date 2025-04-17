@@ -52,6 +52,7 @@ import CancelledOrder from "./pages/restaurants/CanceledOrder";
 import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
 import RestaurantMenu from "./pages/RestaurantMenu";
+import FoodHomePage from "./pages/FoodHomePage";
 
 const ResturentRoutes = () => {
   return (
@@ -100,6 +101,7 @@ function App() {
           <Route path="order" element={<Order />} />
           <Route path="cart" element={<Cart />} /> 
           <Route path="restaurant-menu" element={<RestaurantMenu />} /> 
+          <Route path="menu" element={<FoodHomePage />} /> 
         </Route>
         <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />
         <Route path="/admin-dashboard/*" element={<AdminRoutes />} />
