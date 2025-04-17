@@ -1,11 +1,8 @@
-// src/components/Payment/PaymentMethod.tsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card } from '@/components/UI/card';
 import { Button } from './Button';
 import { FaCcVisa, FaCcMastercard, FaCcAmex, FaCcDiscover } from 'react-icons/fa';
 import { FiShoppingCart, FiInfo } from 'react-icons/fi';
-import { BsFillPersonFill } from 'react-icons/bs';
 
 const PaymentMethod = () => {
     const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('cash');
@@ -29,7 +26,7 @@ const PaymentMethod = () => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-8 p-8 bg-gray-50">
+        <div className="flex flex-col md:flex-row gap-8 p-15 bg-gray-50 my-20 mx-5 mt-20">
             {/* Left Sidebar: Checkout/Order Details */}
             <div className="flex-1 bg-white shadow-lg p-6 rounded-xl">
                 <div className="flex justify-between items-center mb-6">
