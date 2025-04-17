@@ -10,6 +10,7 @@ const menu = [
       { name: "Classic Big Mac", price: "$3.99", img: "./assets/images/Classic_Big_Mac.jpg" },
       { name: "Double Big Mac", price: "$5.49", img: "./assets/images/Double_Big_Mac.jpg"},
       { name: "Spicy Big Mac", price: "$4.29", img: "./assets/images/Spicy_Big_Mac.jpg" },
+      { name: "Spicy Big Mac", price: "$4.29", img: "./assets/images/Spicy_Big_Mac.jpg" },
     ],
   },
   {
@@ -17,6 +18,7 @@ const menu = [
     items: [
       { name: "Classic Fries", price: "$1.49", img: "/assets/images/Classic_Fries.jpg" },
       { name: "Cheesy Fries", price: "$2.29", img: "/assets/images/Cheesy_Fries.jpg" },
+      { name: "Curly Fries", price: "$2.79", img: "./assets/images/Curly_Fries.jpg" },
       { name: "Curly Fries", price: "$2.79", img: "./assets/images/Curly_Fries.jpg" },
     ],
   },
@@ -26,8 +28,10 @@ const menu = [
       { name: "Coke", price: "$1.29", img: "./assets/images/Coke.jpg" },
       { name: "Sprite", price: "$1.29", img: "./assets/images/Sprite.jpg" },
       { name: "Fanta", price: "$1.29", img: "./assets/images/Fanta.jpg" },
+      { name: "Fanta", price: "$1.29", img: "./assets/images/Fanta.jpg" },
     ],
   },
+  
 ];
 
 // Animation variants for cards
@@ -52,15 +56,15 @@ const cardVariants = {
 };
 
 const Menu: React.FC = () => (
-  <div className="space-y-10">
-    {menu.map((section, sectionIdx) => (
+  <div className="space-y-10 ">
+    {menu.map((section) => (
       <div key={section.section}>
         <h2 className="text-2xl font-bold mb-4">{section.section}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 w-50 h-50 md:grid-cols-3 lg:grid-cols-4 gap-6 ">
           {section.items.map((item, i) => (
             <motion.div
               key={item.name}
-              className="bg-white rounded-lg shadow p-4 flex flex-col items-center"
+              className="bg-white rounded-lg p-4 flex flex-col items-center shadow-md"
               custom={i}
               initial="hidden"
               whileInView="visible"
@@ -78,7 +82,11 @@ const Menu: React.FC = () => (
               />
               <div className="font-semibold">{item.name}</div>
               <div className="text-gray-500 mb-2">{item.price}</div>
+              <div className="flex flex-row gap-4 ">
               <Button>Add to Cart</Button>
+              <Button className="bg-gray-400">View</Button>
+              </div>
+             
             </motion.div>
           ))}
         </div>

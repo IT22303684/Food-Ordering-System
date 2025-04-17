@@ -7,14 +7,18 @@ const categories = [
   "fastfood",
   "local_cafe",
   "icecream",
+  "restaurant",
+  "fastfood",
+  "local_cafe",
+  
 ];
 
 const Categories: React.FC = () => (
-  <div className="flex flex-wrap gap-4 justify-center bg-gray-100 py-4 rounded-lg shadow mb-6">
+  <div className="flex flex-wrap gap-4 justify-center bg-orange-500 py-4 shadow mb-6 w-full rounded-xl">
     {categories.map((cat) => (
       <div
         key={cat}
-        className="bg-white px-6 py-2 rounded-full shadow text-gray-700 font-medium cursor-pointer hover:bg-orange-100 transition"
+        className="bg-orange-100 px-5 py-1 rounded-xl shadow text-gray-700 font-medium cursor-pointer hover:bg-orange-400 hover:text-slate-50 transition"
       >
         {cat}
       </div>
