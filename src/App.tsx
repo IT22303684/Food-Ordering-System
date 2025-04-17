@@ -9,7 +9,7 @@ import OrderConfirmation from '@/pages/OrderConfirmation';
 
 import Order from "./pages/Order";
 import Cart from "./pages/Cart";
-import Layout from "./assets/fonts/Layout";
+
 
 function App() {
   return (
