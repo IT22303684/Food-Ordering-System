@@ -104,18 +104,7 @@ const PaymentMethod = () => {
                         )}
                     </div>
 
-                    <label
-                        className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${selectedPaymentMethod === 'paypal' ? 'border-blue-500 bg-blue-50' : 'border-gray-300'}`}
-                        onClick={() => handlePaymentMethodChange('paypal')}
-                    >
-                        <input
-                            type="radio"
-                            name="payment"
-                            checked={selectedPaymentMethod === 'paypal'}
-                            className="h-5 w-5 text-blue-500"
-                        />
-                        <span className="text-lg font-medium text-gray-700">PayPal</span>
-                    </label>
+                    
                 </div>
 
                 {/* Tip Amount */}

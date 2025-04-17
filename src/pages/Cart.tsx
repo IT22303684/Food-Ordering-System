@@ -83,12 +83,13 @@ const Cart: React.FC = () => {
         {/* Back & Checkout Buttons */}
         <div className="flex justify-between mt-6">
           <button 
-            onClick={() => navigate("/order")} 
+            onClick={() => navigate("/orders")} 
             className="px-6 py-3 bg-gray-700 text-white rounded-lg transition-all duration-300 hover:bg-gray-900 shadow-md flex items-center text-md"
           >
             ⬅ Back to Order
           </button>
           <button 
+            onClick={() => navigate("/payment-method")} 
             className="px-6 py-3 bg-green-600 text-white rounded-lg transition-all duration-300 hover:bg-green-800 shadow-md text-md"
           >
             Checkout

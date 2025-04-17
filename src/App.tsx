@@ -98,8 +98,8 @@ function App() {
           <Route path="/payment-method" element={<PaymentMethod />} />
           <Route path="/card-details" element={<CardDetails />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          <Route path="order" element={<Order />} />
-          <Route path="cart" element={<Cart />} /> 
+          <Route path="/orders" element={<Order />} />
+          <Route path="/cart" element={<Cart />} /> 
           <Route path="restaurant-menu" element={<RestaurantMenu />} /> 
           <Route path="menu" element={<FoodHomePage />} /> 
         </Route>
