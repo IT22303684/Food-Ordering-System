@@ -37,7 +37,8 @@ const Cart: React.FC = () => {
       <div className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-xl"></div>
 
       {/* Cart Container - Much Wider */}
-      <div className="relative bg-white bg-opacity-90 p-8 rounded-xl shadow-2xl w-full max-w-7xl animate-fade-in">
+      <div className="relative bg-white bg-opacity-90 pt-16 px-8 pb-8 rounded-xl shadow-2xl w-full max-w-7xl animate-fade-in">
+
         <h1 className="text-3xl font-bold mb-4 text-green-700 text-center">🛒 My Basket</h1>
 
         {cartItems.length > 0 ? (
