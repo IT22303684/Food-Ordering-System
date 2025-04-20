@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   ShoppingCartIcon,
   MagnifyingGlassIcon,
+  PhoneIcon,
 } from "@heroicons/react/24/outline";
 import { Link, useLocation } from "react-router-dom";
 import MobileNavBar from "./MobileNavBar";
@@ -9,30 +10,14 @@ import { useAuth } from "@/context/AuthContext";
 import { FiUser, FiLogOut } from "react-icons/fi";
 
 function NavBar() {
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isScrolled] = useState(false);
+  const [isInfoBarVisible ] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
   const isHomePage = location.pathname === "/" || location.pathname === "/home";
   const { user, isAuthenticated, logout } = useAuth();
 
-  // Add scroll event listener only for desktop
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 0) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    if (isHomePage) {
-      window.addEventListener("scroll", handleScroll);
-      return () => window.removeEventListener("scroll", handleScroll);
-    } else {
-      setIsScrolled(true);
-    }
-  }, [isHomePage]);
-
+ 
   const handleLogout = () => {
     logout();
     // Redirect to home page after logout
@@ -47,8 +32,40 @@ function NavBar() {
 
   return (
     <>
+      {/* Info Bar */}
+      <div
+        className={`hidden md:block bg-orange-600 text-white text-sm transition-all duration-300 ${
+          "h-8" 
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex justify-between items-center h-8">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <PhoneIcon className="h-4 w-4 mr-1" />
+                <span>+94 76 123 4567</span>
+              </div>
+              <div className="flex items-center">
+                <span className="mr-1">✉️</span>
+                <span>support@foodyx.com</span>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
+                <span className="mr-1">🚚</span>
+                <span>Free delivery on orders over Rs. 1000</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Desktop Navigation */}
-      <nav className="hidden md:block fixed w-full top-0 z-50 transition-all duration-300">
+      <nav
+        className={`hidden md:block fixed w-full ${
+          isInfoBarVisible ? "top-8" : "top-0"
+        } z-50 transition-all duration-300`}
+      >
         <div
           className={`${
             isScrolled || !isHomePage
