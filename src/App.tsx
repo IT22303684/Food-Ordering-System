@@ -11,6 +11,7 @@ import OrderConfirmation from "@/pages/OrderConfirmation";
 import Order from "./pages/Order";
 import Cart from "./pages/Cart";
 import ResturentRegister from "./pages/ResturentRegister";
+import Profile from "./pages/Profile";
 
 //-------------- admin--------------------------------------
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -40,7 +41,6 @@ const AdminRoutes = () => {
 
 //-------------- resturent--------------------------------------
 import ResturentLayout from "./pages/restaurants/ResturentLayout";
-import Profile from "./pages/restaurants/Profile";
 import Overview from "./pages/restaurants/Overview";
 import NewOrder from "./pages/restaurants/NewOrder";
 import PreparingOrder from "./pages/restaurants/PreparingOrder";
@@ -95,6 +95,7 @@ function App() {
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
             <Route path="/orders" element={<Order />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/account" element={<Profile />} />
             <Route
               path="/restaurant/:restaurantId"
               element={<RestaurantMenu />}

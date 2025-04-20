@@ -5,18 +5,70 @@ import { FcGoogle } from "react-icons/fc";
 import toast, { Toaster } from "react-hot-toast";
 import CustomButton from "@/components/UI/CustomButton";
 import { useAuth } from "@/context/AuthContext";
+import { register } from "@/utils/api";
+
+interface FormData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+}
+
+interface FormErrors {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+}
 
 function SignUp() {
   const navigate = useNavigate();
   useAuth();
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [isVerificationStep, setIsVerificationStep] = useState(false);
+  const [verificationPin, setVerificationPin] = useState("");
+  const [formData, setFormData] = useState<FormData>({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    role: "CUSTOMER",
+    address: {
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "",
+    },
+  });
+  const [errors, setErrors] = useState<FormErrors>({
+    email: "",
+    password: "",
+    firstName: "",
+    lastName: "",
+    address: {
+      street: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "",
+    },
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = () => {
@@ -33,83 +85,160 @@ function SignUp() {
 
   const validateEmail = (email: string) => {
     if (!email) {
-      setEmailError("Email is required");
+      setErrors((prev) => ({ ...prev, email: "Email is required" }));
       return false;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Please enter a valid email");
+      setErrors((prev) => ({ ...prev, email: "Please enter a valid email" }));
       return false;
     }
-    setEmailError("");
+    setErrors((prev) => ({ ...prev, email: "" }));
     return true;
   };
 
   const validatePassword = (password: string) => {
     if (!password) {
-      setPasswordError("Password is required");
+      setErrors((prev) => ({ ...prev, password: "Password is required" }));
       return false;
     }
     if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 6 characters",
+      }));
       return false;
     }
-    setPasswordError("");
+    setErrors((prev) => ({ ...prev, password: "" }));
     return true;
   };
 
-  const validateConfirmPassword = (confirmPassword: string) => {
-    if (!confirmPassword) {
-      setConfirmPasswordError("Please confirm your password");
-      return false;
+  const validateForm = () => {
+    let isValid = true;
+    if (!formData.firstName.trim()) {
+      setErrors((prev) => ({ ...prev, firstName: "First name is required" }));
+      isValid = false;
     }
-    if (password !== confirmPassword) {
-      setConfirmPasswordError("Passwords do not match");
-      return false;
+    if (!formData.lastName.trim()) {
+      setErrors((prev) => ({ ...prev, lastName: "Last name is required" }));
+      isValid = false;
     }
-    setConfirmPasswordError("");
-    return true;
+    if (!formData.address.street.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        address: { ...prev.address, street: "Street is required" },
+      }));
+      isValid = false;
+    }
+    if (!formData.address.city.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        address: { ...prev.address, city: "City is required" },
+      }));
+      isValid = false;
+    }
+    if (!formData.address.state.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        address: { ...prev.address, state: "State is required" },
+      }));
+      isValid = false;
+    }
+    if (!formData.address.zipCode.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        address: { ...prev.address, zipCode: "Zip code is required" },
+      }));
+      isValid = false;
+    }
+    if (!formData.address.country.trim()) {
+      setErrors((prev) => ({
+        ...prev,
+        address: { ...prev.address, country: "Country is required" },
+      }));
+      isValid = false;
+    } else if (formData.address.country.toLowerCase() !== "sri lanka") {
+      setErrors((prev) => ({
+        ...prev,
+        address: { ...prev.address, country: "Only Sri Lanka is allowed" },
+      }));
+      isValid = false;
+    }
+    return isValid;
   };
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (emailError) validateEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
-    if (passwordError) validatePassword(e.target.value);
-    if (confirmPassword) validateConfirmPassword(confirmPassword);
-  };
-
-  const handleConfirmPasswordChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setConfirmPassword(e.target.value);
-    if (confirmPasswordError) validateConfirmPassword(e.target.value);
-  };
-
-  const handleEmailBlur = () => {
-    validateEmail(email);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (name.includes(".")) {
+      const [parent, child] = name.split(".");
+      setFormData((prev) => ({
+        ...prev,
+        [parent]: {
+          ...(prev[parent as keyof FormData] as Record<string, string>),
+          [child]: value,
+        },
+      }));
+      // Clear address field errors
+      setErrors((prev) => ({
+        ...prev,
+        address: { ...prev.address, [child]: "" },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+      // Clear field errors
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleFormSubmit = async () => {
-    const isEmailValid = validateEmail(email);
-    const isPasswordValid = validatePassword(password);
-    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
-
-    if (!isEmailValid || !isPasswordValid || !isConfirmPasswordValid) {
+    if (
+      !validateEmail(formData.email) ||
+      !validatePassword(formData.password) ||
+      !validateForm()
+    ) {
       return;
     }
 
+    // Ensure country is Sri Lanka
+    const submitData = {
+      ...formData,
+      address: {
+        ...formData.address,
+        country: "Sri Lanka",
+      },
+    };
+
     setIsLoading(true);
     try {
-      // Add your signup API call here
-      // const response = await signup(email, password);
-      toast.success("Account created successfully!");
-      navigate("/signin");
+      await register(submitData);
+      setIsVerificationStep(true);
+      toast.success("Please check your email for verification code");
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast.error(error.message);
+      if (error instanceof Response) {
+        const data = await error.json();
+        if (data.errors) {
+          // Handle field validation errors
+          data.errors.forEach((err: { path: string; msg: string }) => {
+            if (err.path === "lastName") {
+              setErrors((prev) => ({ ...prev, lastName: err.msg }));
+            } else if (err.path === "firstName") {
+              setErrors((prev) => ({ ...prev, firstName: err.msg }));
+            } else if (err.path === "password") {
+              setErrors((prev) => ({ ...prev, password: err.msg }));
+            } else if (err.path.startsWith("address.")) {
+              const field = err.path.split(".")[1];
+              setErrors((prev) => ({
+                ...prev,
+                address: { ...prev.address, [field]: err.msg },
+              }));
+            }
+          });
+        } else if (data.message) {
+          // Handle general error messages
+          toast.error(data.message);
+        }
       } else {
         toast.error("Failed to create account");
       }
@@ -117,6 +246,107 @@ function SignUp() {
       setIsLoading(false);
     }
   };
+
+  const handleVerificationSubmit = async () => {
+    if (!verificationPin) {
+      toast.error("Please enter verification code");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch("http://localhost:3010/api/auth/verify-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          pin: verificationPin,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Verification failed");
+      }
+
+      toast.success("Account verified successfully!");
+      navigate("/signin");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to verify account");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isVerificationStep) {
+    return (
+      <div className="mx-auto flex w-full mt-20 lg:mt-0 max-w-[1920px] flex-col lg:flex-row min-h-screen">
+        <Toaster position="top-right" reverseOrder={false} />
+
+        {/* Background Image */}
+        <div className="hidden lg:block lg:w-[55%] h-screen sticky top-0">
+          <img
+            src="./Signup/Signupbg.webp"
+            alt="Laptop Background"
+            className="h-full w-full object-cover"
+          />
+        </div>
+
+        <div className="flex w-full flex-col px-[20px] pt-[20px] sm:px-[30px] sm:pt-[30px] md:px-20 lg:w-[45%] lg:px-[60px] lg:pt-[80px] 2xl:px-[165px] 2xl:pt-[154px] min-h-screen">
+          <div className="w-full mb-4 hidden lg:block">
+            <span className="text-4xl font-bold text-orange-600">FoodyX</span>
+          </div>
+          <div className="flex w-full flex-col lg:mt-10">
+            <h2 className="font-PlusSans text-[24px] font-bold leading-[32px] text-[#000] lg:text-[36px]">
+              Verify Your Email
+            </h2>
+            <span className="mt-5 font-PlusSans text-sm font-medium leading-6 text-black lg:text-base lg:leading-8">
+              Please enter the verification code sent to your email.
+            </span>
+            <div className="mt-[32px] flex gap-2 justify-center">
+              {[...Array(6)].map((_, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  maxLength={1}
+                  value={verificationPin[index] || ""}
+                  onChange={(e) => {
+                    const newPin = [...verificationPin];
+                    newPin[index] = e.target.value;
+                    setVerificationPin(newPin.join(""));
+                    // Auto-focus next input
+                    if (e.target.value && index < 5) {
+                      const nextInput = document.querySelector(
+                        `input[name="otp-${index + 1}"]`
+                      ) as HTMLInputElement;
+                      nextInput?.focus();
+                    }
+                  }}
+                  name={`otp-${index}`}
+                  className="w-12 h-12 text-center font-PlusSans text-[14px] font-normal leading-[24px] text-black border-b-2 border-[#000] focus:outline-none focus:border-orange-600"
+                />
+              ))}
+            </div>
+            <div className="mt-[32px] w-full">
+              <CustomButton
+                title={isLoading ? "Verifying..." : "Verify Account"}
+                bgColor="bg-orange-600"
+                textColor="text-white"
+                onClick={handleVerificationSubmit}
+                style="hover:bg-orange-700"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex w-full mt-20 lg:mt-0 max-w-[1920px] flex-col lg:flex-row min-h-screen">
@@ -133,7 +363,7 @@ function SignUp() {
 
       {/* Form Section */}
       <div className="flex w-full flex-col px-[20px] pt-[20px] sm:px-[30px] sm:pt-[30px] md:px-20 lg:w-[45%] lg:px-[60px] lg:pt-[80px] 2xl:px-[165px] 2xl:pt-[154px] min-h-screen">
-        {/* Logo - Visible on all screens */}
+        {/* Logo */}
         <div className="w-full mb-4 hidden lg:block">
           <span className="text-4xl font-bold text-orange-600">FoodyX</span>
         </div>
@@ -147,25 +377,69 @@ function SignUp() {
             Create your account to start ordering delicious food.
           </span>
 
+          {/* Name Fields */}
+          <div className="grid grid-cols-2 gap-4 mt-[32px]">
+            <div className="space-y-1">
+              <input
+                type="text"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleInputChange}
+                placeholder="First Name"
+                className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                  errors.firstName ? "text-red-500" : ""
+                }`}
+              />
+              <div
+                className={`h-[1px] w-full ${
+                  errors.firstName ? "bg-red-500" : "bg-[#000]"
+                }`}
+              ></div>
+              {errors.firstName && (
+                <p className="text-xs text-red-500 mt-1">{errors.firstName}</p>
+              )}
+            </div>
+            <div className="space-y-1">
+              <input
+                type="text"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleInputChange}
+                placeholder="Last Name"
+                className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                  errors.lastName ? "text-red-500" : ""
+                }`}
+              />
+              <div
+                className={`h-[1px] w-full ${
+                  errors.lastName ? "bg-red-500" : "bg-[#000]"
+                }`}
+              ></div>
+              {errors.lastName && (
+                <p className="text-xs text-red-500 mt-1">{errors.lastName}</p>
+              )}
+            </div>
+          </div>
+
           {/* Email Input */}
-          <div className="mt-[32px] space-y-1">
+          <div className="mt-[24px] space-y-1">
             <input
               type="email"
-              value={email}
-              onChange={handleEmailChange}
-              onBlur={handleEmailBlur}
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
               placeholder="Username@example.com"
               className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
-                emailError ? "text-red-500" : ""
+                errors.email ? "text-red-500" : ""
               }`}
             />
             <div
               className={`h-[1px] w-full ${
-                emailError ? "bg-red-500" : "bg-[#000]"
+                errors.email ? "bg-red-500" : "bg-[#000]"
               }`}
             ></div>
-            {emailError && (
-              <p className="text-xs text-red-500 mt-1">{emailError}</p>
+            {errors.email && (
+              <p className="text-xs text-red-500 mt-1">{errors.email}</p>
             )}
           </div>
 
@@ -174,11 +448,12 @@ function SignUp() {
             <div className="relative">
               <input
                 type={passwordVisible ? "text" : "password"}
-                value={password}
-                onChange={handlePasswordChange}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
                 placeholder="Create Password"
                 className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
-                  passwordError ? "text-red-500" : ""
+                  errors.password ? "text-red-500" : ""
                 }`}
               />
               <div
@@ -188,67 +463,142 @@ function SignUp() {
                 {passwordVisible ? (
                   <IoEyeOutline
                     size={20}
-                    color={passwordError ? "#EF4444" : "#646464"}
+                    color={errors.password ? "#EF4444" : "#646464"}
                   />
                 ) : (
                   <IoEyeOffOutline
                     size={20}
-                    color={passwordError ? "#EF4444" : "#646464"}
+                    color={errors.password ? "#EF4444" : "#646464"}
                   />
                 )}
               </div>
             </div>
             <div
               className={`h-[1px] w-full ${
-                passwordError ? "bg-red-500" : "bg-[#000]"
+                errors.password ? "bg-red-500" : "bg-[#000]"
               }`}
             ></div>
-            {passwordError && (
-              <p className="text-xs text-red-500 mt-1">{passwordError}</p>
+            {errors.password && (
+              <p className="text-xs text-red-500 mt-1">{errors.password}</p>
             )}
           </div>
 
-          {/* Confirm Password Input */}
-          <div className="mt-[24px] space-y-1">
-            <div className="relative">
+          {/* Address Fields */}
+          <div className="mt-[24px] space-y-4">
+            <div className="space-y-1">
               <input
-                type={confirmPasswordVisible ? "text" : "password"}
-                value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                placeholder="Confirm Password"
+                type="text"
+                name="address.street"
+                value={formData.address.street}
+                onChange={handleInputChange}
+                placeholder="Street Address"
                 className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
-                  confirmPasswordError ? "text-red-500" : ""
+                  errors.address.street ? "text-red-500" : ""
                 }`}
               />
               <div
-                className="absolute right-4 top-1/2 -translate-y-1/2 transform cursor-pointer"
-                onClick={() =>
-                  setConfirmPasswordVisible(!confirmPasswordVisible)
-                }
-              >
-                {confirmPasswordVisible ? (
-                  <IoEyeOutline
-                    size={20}
-                    color={confirmPasswordError ? "#EF4444" : "#646464"}
-                  />
-                ) : (
-                  <IoEyeOffOutline
-                    size={20}
-                    color={confirmPasswordError ? "#EF4444" : "#646464"}
-                  />
+                className={`h-[1px] w-full ${
+                  errors.address.street ? "bg-red-500" : "bg-[#000]"
+                }`}
+              ></div>
+              {errors.address.street && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.address.street}
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  name="address.city"
+                  value={formData.address.city}
+                  onChange={handleInputChange}
+                  placeholder="City"
+                  className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                    errors.address.city ? "text-red-500" : ""
+                  }`}
+                />
+                <div
+                  className={`h-[1px] w-full ${
+                    errors.address.city ? "bg-red-500" : "bg-[#000]"
+                  }`}
+                ></div>
+                {errors.address.city && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.address.city}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  name="address.state"
+                  value={formData.address.state}
+                  onChange={handleInputChange}
+                  placeholder="State"
+                  className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                    errors.address.state ? "text-red-500" : ""
+                  }`}
+                />
+                <div
+                  className={`h-[1px] w-full ${
+                    errors.address.state ? "bg-red-500" : "bg-[#000]"
+                  }`}
+                ></div>
+                {errors.address.state && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.address.state}
+                  </p>
                 )}
               </div>
             </div>
-            <div
-              className={`h-[1px] w-full ${
-                confirmPasswordError ? "bg-red-500" : "bg-[#000]"
-              }`}
-            ></div>
-            {confirmPasswordError && (
-              <p className="text-xs text-red-500 mt-1">
-                {confirmPasswordError}
-              </p>
-            )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  name="address.zipCode"
+                  value={formData.address.zipCode}
+                  onChange={handleInputChange}
+                  placeholder="Zip Code"
+                  className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                    errors.address.zipCode ? "text-red-500" : ""
+                  }`}
+                />
+                <div
+                  className={`h-[1px] w-full ${
+                    errors.address.zipCode ? "bg-red-500" : "bg-[#000]"
+                  }`}
+                ></div>
+                {errors.address.zipCode && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.address.zipCode}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1">
+                <input
+                  type="text"
+                  name="address.country"
+                  value={formData.address.country}
+                  onChange={handleInputChange}
+                  placeholder="Country"
+                  className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                    errors.address.country ? "text-red-500" : ""
+                  }`}
+                />
+                <div
+                  className={`h-[1px] w-full ${
+                    errors.address.country ? "bg-red-500" : "bg-[#000]"
+                  }`}
+                ></div>
+                {errors.address.country && (
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.address.country}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Sign Up Button */}
