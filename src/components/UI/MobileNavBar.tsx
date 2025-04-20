@@ -1,74 +1,104 @@
-import { useState, useEffect } from "react";
-import { ShoppingCartIcon } from "@heroicons/react/24/outline";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { Link, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { Link, } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { FiUser, FiLogOut, FiMenu, FiX } from "react-icons/fi";
+import { HiOutlineShoppingBag } from "react-icons/hi";
 
-function MobileNavBar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
+const MobileNavBar = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  // const location = useLocation();
+  // const isHomePage = location.pathname === "/" || location.pathname === "/home";
+  const { user, isAuthenticated, logout } = useAuth();
 
-  // Reset menu state when route changes
-  useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location.pathname]);
+  const handleLogout = () => {
+    logout();
+    setIsOpen(false);
+    window.location.href = "/";
+  };
 
   return (
-    <nav className="md:hidden fixed w-screen top-0 z-50 bg-white shadow-lg">
-      <div className=" mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+    <>
+      {/* Mobile Navigation Toggle */}
+      <div className="md:hidden fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md shadow-lg">
+        <div className="flex justify-between items-center h-16 px-4">
           <Link to="/" className="text-2xl font-bold text-orange-600">
             FoodyX
           </Link>
-
-          {/* Mobile menu button */}
           <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="text-gray-700 hover:text-orange-600 transition-colors"
+            onClick={() => setIsOpen(!isOpen)}
+            className="text-gray-700 hover:text-orange-600"
           >
-            {isMenuOpen ? (
-              <XMarkIcon className="h-6 w-6" />
-            ) : (
-              <Bars3Icon className="h-6 w-6" />
-            )}
+            {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
           </button>
         </div>
-
-        {/* Mobile Navigation Menu */}
-        {isMenuOpen && (
-          <div className="bg-white shadow-lg px-2 pt-2 pb-3 space-y-1">
-            <Link
-              to="/menu"
-              className="block px-3 py-2 text-gray-700 hover:text-orange-600 transition-colors"
-            >
-              Menu
-            </Link>
-            <Link
-              to="/orders"
-              className="block px-3 py-2 text-gray-700 hover:text-orange-600 transition-colors"
-            >
-              My Orders
-            </Link>
-            <Link
-              to="/cart"
-              className="block px-3 py-2 text-gray-700 hover:text-orange-600 transition-colors"
-            >
-              <div className="flex items-center">
-                <ShoppingCartIcon className="h-6 w-6 mr-2" />
-                Cart
-              </div>
-            </Link>
-            <Link
-              to="/signin"
-              className="block px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors"
-            >
-              Sign In
-            </Link>
-          </div>
-        )}
       </div>
-    </nav>
+
+      {/* Mobile Navigation Menu */}
+      <div
+        className={`md:hidden fixed inset-0 z-40 bg-white/95 backdrop-blur-md transform transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <div className="flex flex-col h-full pt-20 px-4">
+          <Link
+            to="/menu"
+            className="text-gray-700 hover:text-orange-600 py-4 text-lg font-medium"
+            onClick={() => setIsOpen(false)}
+          >
+            Menu
+          </Link>
+
+          {isAuthenticated && user?.role === "CUSTOMER" ? (
+            <>
+              <Link
+                to="/cart"
+                className="flex items-center text-gray-700 hover:text-orange-600 py-4 text-lg font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                <HiOutlineShoppingBag className="mr-2" size={24} />
+                Cart
+              </Link>
+              <Link
+                to="/orders"
+                className="text-gray-700 hover:text-orange-600 py-4 text-lg font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                My Orders
+              </Link>
+              <div className="flex items-center text-gray-700 py-4 text-lg font-medium">
+                <FiUser className="mr-2" size={24} />
+                {user.email}
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center text-gray-700 hover:text-orange-600 py-4 text-lg font-medium"
+              >
+                <FiLogOut className="mr-2" size={24} />
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                to="/signin"
+                className="text-gray-700 hover:text-orange-600 py-4 text-lg font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                Sign In
+              </Link>
+              <Link
+                to="/signup"
+                className="text-gray-700 hover:text-orange-600 py-4 text-lg font-medium"
+                onClick={() => setIsOpen(false)}
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+    </>
   );
-}
+};
 
 export default MobileNavBar;

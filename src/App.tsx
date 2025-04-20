@@ -1,11 +1,12 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "@/context/AuthContext";
 import Home from "./pages/Home";
 import Layout from "./components/UI/Layout";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
-import PaymentMethod from '@/components/Payment/PaymentMethod';
-import CardDetails from '@/components/Payment/CardDetails';
-import OrderConfirmation from '@/pages/OrderConfirmation';
+import PaymentMethod from "@/components/Payment/PaymentMethod";
+import CardDetails from "@/components/Payment/CardDetails";
+import OrderConfirmation from "@/pages/OrderConfirmation";
 
 import Order from "./pages/Order";
 import Cart from "./pages/Cart";
@@ -21,24 +22,21 @@ const AdminRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<AdminLayout />}>
-        <Route index element={<Navigate to="overview" replace />} /> {/* Relative path */}
+        <Route index element={<Navigate to="overview" replace />} />{" "}
+        {/* Relative path */}
         <Route path="overview" element={<Overview />} />
         <Route path="profile" element={<Profile />} />
-
         {/* Order-related routes grouped under /orders */}
         <Route path="resturent">
-            <Route path="" element={<AllResturent />} />
-            <Route path="request" element={<RequestResturent />} />
-            <Route path="add" element={<AddResturent />} />
+          <Route path="" element={<AllResturent />} />
+          <Route path="request" element={<RequestResturent />} />
+          <Route path="add" element={<AddResturent />} />
         </Route>
-
         {/* Add more routes as needed to match sidebar */}
-
       </Route>
     </Routes>
   );
 };
-
 
 //-------------- resturent--------------------------------------
 import ResturentLayout from "./pages/restaurants/ResturentLayout";
@@ -53,33 +51,29 @@ import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
 import RestaurantMenu from "./pages/RestaurantMenu";
 import FoodHomePage from "./pages/FoodHomePage";
+import MobileBottomNav from "./components/UI/MobileBottomNav";
 
 const ResturentRoutes = () => {
   return (
     <Routes>
       <Route path="/" element={<ResturentLayout />}>
-        <Route index element={<Navigate to="overview" replace />} /> {/* Relative path */}
+        <Route index element={<Navigate to="overview" replace />} />{" "}
+        {/* Relative path */}
         <Route path="overview" element={<Overview />} />
         <Route path="profile" element={<Profile />} />
-
         {/* Order-related routes grouped under /orders */}
         <Route path="orders">
-            <Route path="new" element={<NewOrder />} />
-            <Route path="preparing" element={<PreparingOrder />} />
-            <Route path="ready" element={<ReadyOrder />} />
-            <Route path="completed" element={<CompleteOrder />} />
-            <Route path="canceled" element={<CancelledOrder />} />
+          <Route path="new" element={<NewOrder />} />
+          <Route path="preparing" element={<PreparingOrder />} />
+          <Route path="ready" element={<ReadyOrder />} />
+          <Route path="completed" element={<CompleteOrder />} />
+          <Route path="canceled" element={<CancelledOrder />} />
         </Route>
-
         {/* menu-related routes grouped under /menu-management */}
         <Route path="menu-management">
-            <Route path="all" element={<AllItem />} />
-            <Route path="add" element={<AddNewItem />} />
+          <Route path="all" element={<AllItem />} />
+          <Route path="add" element={<AddNewItem />} />
         </Route>
-
-        
-
-        
         {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>
@@ -88,25 +82,31 @@ const ResturentRoutes = () => {
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/signin" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/resturent-signup" element={<ResturentRegister />} />
-          <Route path="/payment-method" element={<PaymentMethod />} />
-          <Route path="/card-details" element={<CardDetails />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          <Route path="/orders" element={<Order />} />
-          <Route path="/cart" element={<Cart />} /> 
-          <Route path="/restaurant/:restaurantId" element={<RestaurantMenu />} /> 
-          <Route path="menu" element={<FoodHomePage />} /> 
-        </Route>
-        <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />
-        <Route path="/admin-dashboard/*" element={<AdminRoutes />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/resturent-signup" element={<ResturentRegister />} />
+            <Route path="/payment-method" element={<PaymentMethod />} />
+            <Route path="/card-details" element={<CardDetails />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/orders" element={<Order />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route
+              path="/restaurant/:restaurantId"
+              element={<RestaurantMenu />}
+            />
+            <Route path="menu" element={<FoodHomePage />} />
+          </Route>
+          <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />
+          <Route path="/admin-dashboard/*" element={<AdminRoutes />} />
+        </Routes>
+        <MobileBottomNav />
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

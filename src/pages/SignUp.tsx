@@ -4,11 +4,11 @@ import { IoEyeOutline, IoEyeOffOutline, IoLogoApple } from "react-icons/io5";
 import { FcGoogle } from "react-icons/fc";
 import toast, { Toaster } from "react-hot-toast";
 import CustomButton from "@/components/UI/CustomButton";
-
-
+import { useAuth } from "@/context/AuthContext";
 
 function SignUp() {
   const navigate = useNavigate();
+  useAuth();
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
   const [email, setEmail] = useState("");
@@ -17,6 +17,7 @@ function SignUp() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = () => {
     window.location.href = `${
@@ -30,73 +31,99 @@ function SignUp() {
     }/api/auth/facebook`;
   };
 
+  const validateEmail = (email: string) => {
+    if (!email) {
+      setEmailError("Email is required");
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Please enter a valid email");
+      return false;
+    }
+    setEmailError("");
+    return true;
+  };
+
+  const validatePassword = (password: string) => {
+    if (!password) {
+      setPasswordError("Password is required");
+      return false;
+    }
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return false;
+    }
+    setPasswordError("");
+    return true;
+  };
+
+  const validateConfirmPassword = (confirmPassword: string) => {
+    if (!confirmPassword) {
+      setConfirmPasswordError("Please confirm your password");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match");
+      return false;
+    }
+    setConfirmPasswordError("");
+    return true;
+  };
+
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
-    setEmailError("");
+    if (emailError) validateEmail(e.target.value);
   };
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
-    setPasswordError("");
+    if (passwordError) validatePassword(e.target.value);
+    if (confirmPassword) validateConfirmPassword(confirmPassword);
   };
 
   const handleConfirmPasswordChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setConfirmPassword(e.target.value);
-    setConfirmPasswordError("");
+    if (confirmPasswordError) validateConfirmPassword(e.target.value);
   };
 
   const handleEmailBlur = () => {
-    if (!email) {
-      setEmailError("Email is required");
-      toast.error("Email is required");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Please enter a valid email");
-      toast.error("Please enter a valid email");
-    }
+    validateEmail(email);
   };
 
-  const handleFormSubmit = () => {
-    setEmailError("");
-    setPasswordError("");
-    setConfirmPasswordError("");
+  const handleFormSubmit = async () => {
+    const isEmailValid = validateEmail(email);
+    const isPasswordValid = validatePassword(password);
+    const isConfirmPasswordValid = validateConfirmPassword(confirmPassword);
 
-    if (!email) {
-      setEmailError("Email is required");
-      return toast.error("Email is required");
+    if (!isEmailValid || !isPasswordValid || !isConfirmPasswordValid) {
+      return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setEmailError("Invalid email address");
-      return toast.error("Invalid email address");
+    setIsLoading(true);
+    try {
+      // Add your signup API call here
+      // const response = await signup(email, password);
+      toast.success("Account created successfully!");
+      navigate("/signin");
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Failed to create account");
+      }
+    } finally {
+      setIsLoading(false);
     }
-
-    if (!password) {
-      setPasswordError("Password is required");
-      return toast.error("Password is required");
-    }
-
-    if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
-      return toast.error("Password must be at least 6 characters");
-    }
-
-    if (password !== confirmPassword) {
-      setConfirmPasswordError("Passwords do not match");
-      return toast.error("Passwords do not match");
-    }
-
-    // Add your signup logic here
-    toast.success("Account created successfully!");
-    navigate("/signin");
   };
 
   return (
-    <div className="mx-auto mt-20 lg:mt-0 flex w-full max-w-[1920px] flex-col lg:flex-row">
+    <div className="mx-auto flex w-full mt-20 lg:mt-0 max-w-[1920px] flex-col lg:flex-row min-h-screen">
       <Toaster position="top-right" reverseOrder={false} />
 
-      <div className="hidden lg:block lg:w-[55%]">
+      {/* Laptop Image */}
+      <div className="hidden lg:block lg:w-[55%] h-screen sticky top-0">
         <img
           src="./Signup/Signupbg.webp"
           alt="Laptop Background"
@@ -104,14 +131,12 @@ function SignUp() {
         />
       </div>
 
-
       {/* Form Section */}
-      <div className="flex w-full flex-col px-[20px] pt-[20px] sm:px-[30px] sm:pt-[30px] md:px-20 lg:w-[45%] lg:px-[60px] lg:pt-[80px] 2xl:px-[165px] 2xl:pt-[154px]">
+      <div className="flex w-full flex-col px-[20px] pt-[20px] sm:px-[30px] sm:pt-[30px] md:px-20 lg:w-[45%] lg:px-[60px] lg:pt-[80px] 2xl:px-[165px] 2xl:pt-[154px] min-h-screen">
         {/* Logo - Visible on all screens */}
         <div className="w-full mb-4 hidden lg:block">
           <span className="text-4xl font-bold text-orange-600">FoodyX</span>
         </div>
-
 
         {/* Sign Up Section */}
         <div className="flex w-full flex-col lg:mt-10">
@@ -123,68 +148,104 @@ function SignUp() {
           </span>
 
           {/* Email Input */}
-          <div className="mt-[32px]">
+          <div className="mt-[32px] space-y-1">
             <input
               type="email"
               value={email}
               onChange={handleEmailChange}
               onBlur={handleEmailBlur}
               placeholder="Username@example.com"
-              className="w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none"
+              className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                emailError ? "text-red-500" : ""
+              }`}
             />
-            <div className="mt-[4px] h-[1px] w-full bg-[#000]"></div>
+            <div
+              className={`h-[1px] w-full ${
+                emailError ? "bg-red-500" : "bg-[#000]"
+              }`}
+            ></div>
             {emailError && (
-              <p className="mt-1 text-xs text-red-500">{emailError}</p>
+              <p className="text-xs text-red-500 mt-1">{emailError}</p>
             )}
           </div>
 
           {/* Password Input */}
-          <div className="relative mt-[36px]">
-            <input
-              type={passwordVisible ? "text" : "password"}
-              value={password}
-              onChange={handlePasswordChange}
-              placeholder="Create Password"
-              className="w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none"
-            />
-            <div
-              className="absolute right-4 top-1/2 -translate-y-1/2 transform cursor-pointer"
-              onClick={() => setPasswordVisible(!passwordVisible)}
-            >
-              {passwordVisible ? (
-                <IoEyeOutline size={20} color="#646464" />
-              ) : (
-                <IoEyeOffOutline size={20} color="#646464" />
-              )}
+          <div className="mt-[24px] space-y-1">
+            <div className="relative">
+              <input
+                type={passwordVisible ? "text" : "password"}
+                value={password}
+                onChange={handlePasswordChange}
+                placeholder="Create Password"
+                className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                  passwordError ? "text-red-500" : ""
+                }`}
+              />
+              <div
+                className="absolute right-4 top-1/2 -translate-y-1/2 transform cursor-pointer"
+                onClick={() => setPasswordVisible(!passwordVisible)}
+              >
+                {passwordVisible ? (
+                  <IoEyeOutline
+                    size={20}
+                    color={passwordError ? "#EF4444" : "#646464"}
+                  />
+                ) : (
+                  <IoEyeOffOutline
+                    size={20}
+                    color={passwordError ? "#EF4444" : "#646464"}
+                  />
+                )}
+              </div>
             </div>
-            <div className="mt-[4px] h-[1px] w-full bg-[#000]"></div>
+            <div
+              className={`h-[1px] w-full ${
+                passwordError ? "bg-red-500" : "bg-[#000]"
+              }`}
+            ></div>
             {passwordError && (
-              <p className="mt-1 text-xs text-red-500">{passwordError}</p>
+              <p className="text-xs text-red-500 mt-1">{passwordError}</p>
             )}
           </div>
 
           {/* Confirm Password Input */}
-          <div className="relative mt-[36px]">
-            <input
-              type={confirmPasswordVisible ? "text" : "password"}
-              value={confirmPassword}
-              onChange={handleConfirmPasswordChange}
-              placeholder="Confirm Password"
-              className="w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none"
-            />
-            <div
-              className="absolute right-4 top-1/2 -translate-y-1/2 transform cursor-pointer"
-              onClick={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
-            >
-              {confirmPasswordVisible ? (
-                <IoEyeOutline size={20} color="#646464" />
-              ) : (
-                <IoEyeOffOutline size={20} color="#646464" />
-              )}
+          <div className="mt-[24px] space-y-1">
+            <div className="relative">
+              <input
+                type={confirmPasswordVisible ? "text" : "password"}
+                value={confirmPassword}
+                onChange={handleConfirmPasswordChange}
+                placeholder="Confirm Password"
+                className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
+                  confirmPasswordError ? "text-red-500" : ""
+                }`}
+              />
+              <div
+                className="absolute right-4 top-1/2 -translate-y-1/2 transform cursor-pointer"
+                onClick={() =>
+                  setConfirmPasswordVisible(!confirmPasswordVisible)
+                }
+              >
+                {confirmPasswordVisible ? (
+                  <IoEyeOutline
+                    size={20}
+                    color={confirmPasswordError ? "#EF4444" : "#646464"}
+                  />
+                ) : (
+                  <IoEyeOffOutline
+                    size={20}
+                    color={confirmPasswordError ? "#EF4444" : "#646464"}
+                  />
+                )}
+              </div>
             </div>
-            <div className="mt-[4px] h-[1px] w-full bg-[#000]"></div>
+            <div
+              className={`h-[1px] w-full ${
+                confirmPasswordError ? "bg-red-500" : "bg-[#000]"
+              }`}
+            ></div>
             {confirmPasswordError && (
-              <p className="mt-1 text-xs text-red-500">
+              <p className="text-xs text-red-500 mt-1">
                 {confirmPasswordError}
               </p>
             )}
@@ -193,11 +254,12 @@ function SignUp() {
           {/* Sign Up Button */}
           <div className="mt-[32px] w-full">
             <CustomButton
-              title="Create Account"
+              title={isLoading ? "Creating Account..." : "Create Account"}
               bgColor="bg-orange-600"
               textColor="text-white"
               onClick={handleFormSubmit}
               style="hover:bg-orange-700"
+              disabled={isLoading}
             />
           </div>
 
