@@ -3,6 +3,42 @@ import Home from "./pages/Home";
 import Layout from "./components/UI/Layout";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import PaymentMethod from '@/components/Payment/PaymentMethod';
+import CardDetails from '@/components/Payment/CardDetails';
+import OrderConfirmation from '@/pages/OrderConfirmation';
+
+import Order from "./pages/Order";
+import Cart from "./pages/Cart";
+import ResturentRegister from "./pages/ResturentRegister";
+
+//-------------- admin--------------------------------------
+import AdminLayout from "./pages/admin/AdminLayout";
+import AllResturent from "./pages/admin/AllResturent";
+import RequestResturent from "./pages/admin/RequestResturent";
+import AddResturent from "./pages/admin/AddResturent";
+
+const AdminRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<AdminLayout />}>
+        <Route index element={<Navigate to="overview" replace />} /> {/* Relative path */}
+        <Route path="overview" element={<Overview />} />
+        <Route path="profile" element={<Profile />} />
+
+        {/* Order-related routes grouped under /orders */}
+        <Route path="resturent">
+            <Route path="" element={<AllResturent />} />
+            <Route path="request" element={<RequestResturent />} />
+            <Route path="add" element={<AddResturent />} />
+        </Route>
+
+        {/* Add more routes as needed to match sidebar */}
+
+      </Route>
+    </Routes>
+  );
+};
+
 
 //-------------- resturent--------------------------------------
 import ResturentLayout from "./pages/restaurants/ResturentLayout";
@@ -15,6 +51,8 @@ import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
 import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
+import RestaurantMenu from "./pages/RestaurantMenu";
+import FoodHomePage from "./pages/FoodHomePage";
 
 const ResturentRoutes = () => {
   return (
@@ -53,13 +91,20 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-
           <Route path="/" element={<Home />} />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/signup" element={<SignUp />} />
-
+          <Route path="/resturent-signup" element={<ResturentRegister />} />
+          <Route path="/payment-method" element={<PaymentMethod />} />
+          <Route path="/card-details" element={<CardDetails />} />
+          <Route path="/order-confirmation" element={<OrderConfirmation />} />
+          <Route path="/orders" element={<Order />} />
+          <Route path="/cart" element={<Cart />} /> 
+          <Route path="/restaurant/:restaurantId" element={<RestaurantMenu />} /> 
+          <Route path="menu" element={<FoodHomePage />} /> 
         </Route>
         <Route path="/resturent-dashboard/*" element={<ResturentRoutes />} />
+        <Route path="/admin-dashboard/*" element={<AdminRoutes />} />
       </Routes>
     </BrowserRouter>
   );
