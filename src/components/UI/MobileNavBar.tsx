@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { FiUser, FiLogOut, FiMenu, FiX } from "react-icons/fi";
 import { HiOutlineShoppingBag } from "react-icons/hi";
@@ -41,11 +41,18 @@ const MobileNavBar = () => {
       >
         <div className="flex flex-col h-full pt-20 px-4">
           <Link
-            to="/menu"
+            to="/restaurants"
             className="text-gray-700 hover:text-orange-600 py-4 text-lg font-medium"
             onClick={() => setIsOpen(false)}
           >
-            Menu
+            Restaurants
+          </Link>
+          <Link
+            to="/dishes"
+            className="text-gray-700 hover:text-orange-600 py-4 text-lg font-medium"
+            onClick={() => setIsOpen(false)}
+          >
+            Dishes
           </Link>
 
           {isAuthenticated && user?.role === "CUSTOMER" ? (

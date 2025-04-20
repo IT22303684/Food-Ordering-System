@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import { HiHome, HiSearch,  } from "react-icons/hi";
+import { HiHome, HiSearch } from "react-icons/hi";
 import { useAuth } from "@/context/AuthContext";
 import { ShoppingCartIcon } from "@heroicons/react/24/outline";
-import { FiUser } from "react-icons/fi";
+import { FiUser, FiPackage } from "react-icons/fi";
 
 function MobileBottomNav() {
   const location = useLocation();
@@ -23,6 +23,11 @@ function MobileBottomNav() {
       name: "Cart",
       icon: ShoppingCartIcon,
       path: "/cart",
+    },
+    {
+      name: "Orders",
+      icon: FiPackage,
+      path: "/orders",
     },
     {
       name: "Account",
