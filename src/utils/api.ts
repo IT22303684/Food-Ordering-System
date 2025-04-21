@@ -100,3 +100,79 @@ export const updateProfile = async (userData: Partial<FormData>) => {
     throw error;
   }
 };
+
+//------------------------ resturent api's ----------------------
+
+interface RestaurantFormData {
+  restaurantName: string;
+  contactPerson: string;
+  phoneNumber: string;
+  businessType: string;
+  cuisineType: string;
+  operatingHours: string;
+  deliveryRadius: string;
+  taxId: string;
+  streetAddress: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+  email: string;
+  password: string;
+  agreeTerms: boolean;
+  businessLicense: File | null;
+  foodSafetyCert: File | null;
+  exteriorPhoto: File | null;
+  logo: File | null;
+}
+
+export const registerRestaurant = async (restaurantData: RestaurantFormData) => {
+  try {
+    const formData = new FormData();
+    formData.append("restaurantName", restaurantData.restaurantName);
+    formData.append("contactPerson", restaurantData.contactPerson);
+    formData.append("phoneNumber", restaurantData.phoneNumber);
+    formData.append("businessType", restaurantData.businessType);
+    formData.append("cuisineType", restaurantData.cuisineType);
+    formData.append("operatingHours", restaurantData.operatingHours);
+    formData.append("deliveryRadius", restaurantData.deliveryRadius);
+    formData.append("taxId", restaurantData.taxId);
+    // Send address fields individually instead of nesting
+    formData.append("streetAddress", restaurantData.streetAddress);
+    formData.append("city", restaurantData.city);
+    formData.append("state", restaurantData.state);
+    formData.append("zipCode", restaurantData.zipCode);
+    formData.append("country", restaurantData.country);
+    formData.append("email", restaurantData.email);
+    formData.append("password", restaurantData.password);
+    formData.append("agreeTerms", String(restaurantData.agreeTerms));
+    if (restaurantData.businessLicense) {
+      formData.append("businessLicense", restaurantData.businessLicense);
+    }
+    if (restaurantData.foodSafetyCert) {
+      formData.append("foodSafetyCert", restaurantData.foodSafetyCert);
+    }
+    if (restaurantData.exteriorPhoto) {
+      formData.append("exteriorPhoto", restaurantData.exteriorPhoto);
+    }
+    if (restaurantData.logo) {
+      formData.append("logo", restaurantData.logo);
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/register`, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw response;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Restaurant registration error:", error);
+    throw error;
+  }
+};
+
+// ... other functions (login, register, etc.) remain unchanged ...
