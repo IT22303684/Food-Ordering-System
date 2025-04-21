@@ -86,7 +86,12 @@ function SignIn() {
           role: response.user.role,
         });
       }
-      navigate("/");
+      if(response.user.role == "RESTAURANT"){
+        navigate("/resturent-dashboard");
+      }else{
+        navigate("/");
+      }
+      
     } catch (error: unknown) {
       if (error instanceof Error) {
         toast.error(error.message);

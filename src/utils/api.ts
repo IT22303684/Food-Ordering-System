@@ -101,7 +101,7 @@ export const updateProfile = async (userData: Partial<FormData>) => {
   }
 };
 
-//------------------------ resturent api's ----------------------
+//------------------------ Restaurant APIs ----------------------
 
 interface RestaurantFormData {
   restaurantName: string;
@@ -118,8 +118,8 @@ interface RestaurantFormData {
   zipCode: string;
   country: string;
   email: string;
-  password: string;
-  agreeTerms: boolean;
+  password?: string; // Optional for updates
+  agreeTerms?: boolean; // Optional for updates
   businessLicense: File | null;
   foodSafetyCert: File | null;
   exteriorPhoto: File | null;
@@ -144,8 +144,12 @@ export const registerRestaurant = async (restaurantData: RestaurantFormData) => 
     formData.append("zipCode", restaurantData.zipCode);
     formData.append("country", restaurantData.country);
     formData.append("email", restaurantData.email);
-    formData.append("password", restaurantData.password);
-    formData.append("agreeTerms", String(restaurantData.agreeTerms));
+    if (restaurantData.password) {
+      formData.append("password", restaurantData.password);
+    }
+    if (typeof restaurantData.agreeTerms !== "undefined") {
+      formData.append("agreeTerms", String(restaurantData.agreeTerms));
+    }
     if (restaurantData.businessLicense) {
       formData.append("businessLicense", restaurantData.businessLicense);
     }
@@ -175,4 +179,80 @@ export const registerRestaurant = async (restaurantData: RestaurantFormData) => 
   }
 };
 
-// ... other functions (login, register, etc.) remain unchanged ...
+// Fetch restaurant details by ID
+export const getRestaurantById = async (id: string, token: string) => {
+  try {
+    const response = await fetch(`${BASE_URL}/restaurants/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw response;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching restaurant:", error);
+    throw error;
+  }
+};
+
+// Update restaurant details
+export const updateRestaurant = async (
+  id: string,
+  restaurantData: RestaurantFormData,
+  token: string
+) => {
+  try {
+    const formData = new FormData();
+    formData.append("restaurantName", restaurantData.restaurantName);
+    formData.append("contactPerson", restaurantData.contactPerson);
+    formData.append("phoneNumber", restaurantData.phoneNumber);
+    formData.append("businessType", restaurantData.businessType);
+    formData.append("cuisineType", restaurantData.cuisineType);
+    formData.append("operatingHours", restaurantData.operatingHours);
+    formData.append("deliveryRadius", restaurantData.deliveryRadius);
+    formData.append("taxId", restaurantData.taxId);
+    formData.append("streetAddress", restaurantData.streetAddress);
+    formData.append("city", restaurantData.city);
+    formData.append("state", restaurantData.state);
+    formData.append("zipCode", restaurantData.zipCode);
+    formData.append("country", restaurantData.country);
+    formData.append("email", restaurantData.email);
+
+    if (restaurantData.businessLicense) {
+      formData.append("businessLicense", restaurantData.businessLicense);
+    }
+    if (restaurantData.foodSafetyCert) {
+      formData.append("foodSafetyCert", restaurantData.foodSafetyCert);
+    }
+    if (restaurantData.exteriorPhoto) {
+      formData.append("exteriorPhoto", restaurantData.exteriorPhoto);
+    }
+    if (restaurantData.logo) {
+      formData.append("logo", restaurantData.logo);
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        // Note: Do NOT set Content-Type for FormData; fetch handles it automatically
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw response;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Restaurant update error:", error);
+    throw error;
+  }
+};
