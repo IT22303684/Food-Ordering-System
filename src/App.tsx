@@ -51,6 +51,7 @@ import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
 import RestaurantMenu from "./pages/RestaurantMenu";
 import FoodHomePage from "./pages/FoodHomePage";
+import ResturentProfile from "./pages/restaurants/ResturentProfile";
 import MobileBottomNav from "./components/UI/MobileBottomNav";
 
 const ResturentRoutes = () => {
@@ -60,7 +61,7 @@ const ResturentRoutes = () => {
         <Route index element={<Navigate to="overview" replace />} />{" "}
         {/* Relative path */}
         <Route path="overview" element={<Overview />} />
-        <Route path="profile" element={<Profile />} />
+        <Route path="profile" element={<ResturentProfile />} />
         {/* Order-related routes grouped under /orders */}
         <Route path="orders">
           <Route path="new" element={<NewOrder />} />

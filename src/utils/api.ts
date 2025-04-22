@@ -126,6 +126,7 @@ interface RestaurantFormData {
   logo: File | null;
 }
 
+// Register restaurant
 export const registerRestaurant = async (restaurantData: RestaurantFormData) => {
   try {
     const formData = new FormData();
@@ -179,80 +180,82 @@ export const registerRestaurant = async (restaurantData: RestaurantFormData) => 
   }
 };
 
-// Fetch restaurant details by ID
-export const getRestaurantById = async (id: string, token: string) => {
+// Fetch restaurant by userId
+export const getRestaurantByUserId = async () => {
   try {
-    const response = await fetch(`${BASE_URL}/restaurants/${id}`, {
-      method: "GET",
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found. Please log in.');
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants`, {
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) {
-      throw response;
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch restaurant');
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Error fetching restaurant:", error);
+    console.error('Fetch restaurant by userId error:', error);
     throw error;
   }
 };
 
-// Update restaurant details
-export const updateRestaurant = async (
-  id: string,
-  restaurantData: RestaurantFormData,
-  token: string
-) => {
+// Update restaurant
+export const updateRestaurant = async (restaurantId: string, data: { [key: string]: any }, files?: { [key: string]: File | null }) => {
   try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found. Please log in.');
+    }
+
     const formData = new FormData();
-    formData.append("restaurantName", restaurantData.restaurantName);
-    formData.append("contactPerson", restaurantData.contactPerson);
-    formData.append("phoneNumber", restaurantData.phoneNumber);
-    formData.append("businessType", restaurantData.businessType);
-    formData.append("cuisineType", restaurantData.cuisineType);
-    formData.append("operatingHours", restaurantData.operatingHours);
-    formData.append("deliveryRadius", restaurantData.deliveryRadius);
-    formData.append("taxId", restaurantData.taxId);
-    formData.append("streetAddress", restaurantData.streetAddress);
-    formData.append("city", restaurantData.city);
-    formData.append("state", restaurantData.state);
-    formData.append("zipCode", restaurantData.zipCode);
-    formData.append("country", restaurantData.country);
-    formData.append("email", restaurantData.email);
 
-    if (restaurantData.businessLicense) {
-      formData.append("businessLicense", restaurantData.businessLicense);
-    }
-    if (restaurantData.foodSafetyCert) {
-      formData.append("foodSafetyCert", restaurantData.foodSafetyCert);
-    }
-    if (restaurantData.exteriorPhoto) {
-      formData.append("exteriorPhoto", restaurantData.exteriorPhoto);
-    }
-    if (restaurantData.logo) {
-      formData.append("logo", restaurantData.logo);
+    // Append text fields
+    Object.entries(data).forEach(([key, value]) => {
+      if (key === 'address') {
+        // Handle nested address object
+        Object.entries(value as { [key: string]: string }).forEach(([addrKey, addrValue]) => {
+          formData.append(`address[${addrKey}]`, addrValue);
+        });
+      } else {
+        formData.append(key, value as string);
+      }
+    });
+
+    // Append files if provided
+    if (files) {
+      Object.entries(files).forEach(([key, file]) => {
+        if (file) {
+          formData.append(key, file);
+        }
+      });
     }
 
-    const response = await fetch(`${BASE_URL}/restaurants/${id}`, {
-      method: "PUT",
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}`, {
+      method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
-        // Note: Do NOT set Content-Type for FormData; fetch handles it automatically
+        // Do NOT set Content-Type; fetch will set it automatically for multipart/form-data
       },
       body: formData,
     });
 
     if (!response.ok) {
-      throw response;
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update restaurant');
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Restaurant update error:", error);
+    console.error('Update restaurant error:', error);
     throw error;
   }
 };
