@@ -51,6 +51,7 @@ import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
 import RestaurantMenu from "./pages/RestaurantMenu";
 import FoodHomePage from "./pages/FoodHomePage";
+import Restaurant from "./pages/Restaurant";
 import ResturentProfile from "./pages/restaurants/ResturentProfile";
 import MobileBottomNav from "./components/UI/MobileBottomNav";
 
@@ -91,6 +92,7 @@ function App() {
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/resturent-signup" element={<ResturentRegister />} />
+            <Route path="/restaurants" element={<Restaurant />} />
             <Route path="/payment-method" element={<PaymentMethod />} />
             <Route path="/card-details" element={<CardDetails />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
@@ -98,7 +100,7 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/account" element={<Profile />} />
             <Route
-              path="/restaurant/:restaurantId"
+              path="/restaurant/:restaurantId/menu"
               element={<RestaurantMenu />}
             />
             <Route path="menu" element={<FoodHomePage />} />

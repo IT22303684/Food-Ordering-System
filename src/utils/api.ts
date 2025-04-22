@@ -259,3 +259,25 @@ export const updateRestaurant = async (restaurantId: string, data: { [key: strin
     throw error;
   }
 };
+
+// Get all resturents
+export const getAllRestaurants = async (page = 1, limit = 10) => {
+  try {
+    const response = await fetch(`${BASE_URL}/restaurants/all?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch restaurants');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch all restaurants error:', error);
+    throw error;
+  }
+};
