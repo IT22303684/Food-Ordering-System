@@ -118,8 +118,8 @@ interface RestaurantFormData {
   zipCode: string;
   country: string;
   email: string;
-  password?: string; // Optional for updates
-  agreeTerms?: boolean; // Optional for updates
+  password?: string; 
+  agreeTerms?: boolean;
   businessLicense: File | null;
   foodSafetyCert: File | null;
   exteriorPhoto: File | null;
@@ -289,6 +289,7 @@ export const getRestaurantById = async (restaurantId: string) => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
 
@@ -300,6 +301,59 @@ export const getRestaurantById = async (restaurantId: string) => {
     return await response.json();
   } catch (error) {
     console.error('Fetch restaurant details error:', error);
+    throw error;
+  }
+};
+
+// Delete a restaurant by ID
+export const deleteRestaurant = async (restaurantId: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete restaurant');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Delete restaurant error:', error);
+    throw error;
+  }
+};
+
+// Update restaurant status (block/unblock)
+export const updateRestaurantStatus = async (restaurantId: string, status: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update restaurant status');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Update restaurant status error:', error);
     throw error;
   }
 };

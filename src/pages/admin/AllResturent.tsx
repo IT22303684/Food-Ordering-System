@@ -1,8 +1,10 @@
-import React from "react";
-import AdminResturentTable from "../../components/UI/AdminResturentTable";
-import ResturentTitle from "../../components/UI/ResturentTitle";
+import React, { useEffect, useState } from 'react';
+import AdminResturentTable from '../../components/UI/AdminResturentTable';
+import ResturentTitle from '../../components/UI/ResturentTitle';
+import { getAllRestaurants } from '../../utils/api';
 
 export interface Restaurant {
+  _id: string;
   restaurantName: string;
   contactPerson: string;
   phoneNumber: string;
@@ -17,67 +19,84 @@ export interface Restaurant {
   zipCode: string;
   country: string;
   email: string;
+  status: string; 
 }
 
-// Define table headers for restaurant details
+// table headers for restaurant details
 const tableHeaders: string[] = [
-  "Restaurant Name",
-  "Contact Person",
-  "Phone Number",
-  "Business Type",
-  "Cuisine Type",
-  "Operating Hours",
-  "Delivery Radius",
-  "Tax ID",
-  "Street Address",
-  "City",
-  "State",
-  "Zip Code",
-  "Country",
-  "Email"
-];
-
-// Sample restaurant data
-const restaurantData: Restaurant[] = [
-  {
-    restaurantName: "Pizza Palace",
-    contactPerson: "John Doe",
-    phoneNumber: "+1-123-456-7890",
-    businessType: "Restaurant",
-    cuisineType: "Italian",
-    operatingHours: "10 AM - 10 PM",
-    deliveryRadius: "5 miles",
-    taxId: "TAX12345",
-    streetAddress: "123 Main Street",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
-    country: "USA",
-    email: "contact@pizzapalace.com"
-  },
-  {
-    restaurantName: "Burger Haven",
-    contactPerson: "Jane Smith",
-    phoneNumber: "+1-987-654-3210",
-    businessType: "Fast Food Chain",
-    cuisineType: "American",
-    operatingHours: "9 AM - 11 PM",
-    deliveryRadius: "10 miles",
-    taxId: "TAX67890",
-    streetAddress: "456 Elm Street",
-    city: "Los Angeles",
-    state: "CA",
-    zipCode: "90001",
-    country: "USA",
-    email: "info@burgerhaven.com"
-  },
+  'Restaurant Name',
+  'Contact Person',
+  'Phone Number',
+  'Business Type',
+  'Cuisine Type',
+  'Operating Hours',
+  'Delivery Radius',
+  'Tax ID',
+  'Street Address',
+  'City',
+  'Province',
+  'Zip Code',
+  'Country',
+  'Status',
+  'Action'
 ];
 
 const RestaurantDetailsPage: React.FC = () => {
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch restaurants on component mount
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllRestaurants(1, 10); // Adjust page/limit as needed
+        // Map API response to match Restaurant interface
+        const formattedRestaurants: Restaurant[] = response.data.map((item: any) => ({
+          _id: item._id,
+          restaurantName: item.restaurantName,
+          contactPerson: item.contactPerson,
+          phoneNumber: item.phoneNumber,
+          businessType: item.businessType,
+          cuisineType: item.cuisineType,
+          operatingHours: item.operatingHours,
+          deliveryRadius: item.deliveryRadius,
+          taxId: item.taxId,
+          streetAddress: item.address.streetAddress,
+          city: item.address.city,
+          state: item.address.state,
+          zipCode: item.address.zipCode,
+          country: item.address.country,
+          email: item.email,
+          status: item.status || 'approved',
+        }));
+        setRestaurants(formattedRestaurants);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || 'Failed to load restaurants. Please try again.');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurants();
+  }, []);
+
+  // Handle delete action from table
+  const handleDelete = (restaurantId: string) => {
+    setRestaurants((prev) => prev.filter((restaurant) => restaurant._id !== restaurantId));
+  };
+
   return (
     <div className="p-4">
       <ResturentTitle text="Restaurant Details" />
-      <AdminResturentTable headers={tableHeaders} data={restaurantData} />
+      {loading && <div className="text-center p-4 text-gray-600 dark:text-gray-300">Loading...</div>}
+      {error && <div className="text-center p-4 text-red-500">{error}</div>}
+      {!loading && !error && (
+        <AdminResturentTable headers={tableHeaders} data={restaurants} onDelete={handleDelete} />
+      )}
     </div>
   );
 };
