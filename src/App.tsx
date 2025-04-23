@@ -7,7 +7,8 @@ import SignUp from "./pages/SignUp";
 import PaymentMethod from "@/components/Payment/PaymentMethod";
 import CardDetails from "@/components/Payment/CardDetails";
 import OrderConfirmation from "@/pages/OrderConfirmation";
-
+import RestaurantMenu from "./pages/RestaurantMenu";
+import ViewMenuItem from "./pages/ViewMenuItem";
 import Order from "./pages/Order";
 import Cart from "./pages/Cart";
 import ResturentRegister from "./pages/ResturentRegister";
@@ -49,7 +50,7 @@ import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
 import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
-import RestaurantMenu from "./pages/RestaurantMenu";
+
 import FoodHomePage from "./pages/FoodHomePage";
 import Restaurant from "./pages/Restaurant";
 import ResturentProfile from "./pages/restaurants/ResturentProfile";
@@ -102,6 +103,10 @@ function App() {
             <Route
               path="/restaurant/:restaurantId/menu"
               element={<RestaurantMenu />}
+            />
+            <Route
+              path="/restaurant/:restaurantId/menu/:menuItemId"
+              element={<ViewMenuItem />}
             />
             <Route path="menu" element={<FoodHomePage />} />
           </Route>

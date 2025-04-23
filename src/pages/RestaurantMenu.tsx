@@ -125,7 +125,7 @@ const RestaurantMenu: React.FC = () => {
   }
 
   return (
-    <div className="w-full bg-gray-50 min-h-screen flex flex-col">
+    <div className="w-full bg-white min-h-screen flex flex-col">
       {/* Banner Section */}
       <div className="w-full h-64 bg-black flex items-center justify-center relative">
         <img
@@ -153,7 +153,7 @@ const RestaurantMenu: React.FC = () => {
                 placeholder="Search menu items..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full p-3 pl-10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="w-full bg-gray-50 p-3 pl-10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500"
               />
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
             </div>
@@ -162,7 +162,7 @@ const RestaurantMenu: React.FC = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="p-3 w-fit rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500"
+              className="p-3 w-fit rounded-xl focus:outline-none bg-gray-50 focus:ring-2 focus:ring-orange-500"
             >
               {categories.map((category) => (
                 <option key={category} value={category}>
@@ -184,7 +184,7 @@ const RestaurantMenu: React.FC = () => {
                 <h2 className="text-2xl font-bold mb-4">{section.section}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                   {section.items.map((item, i) => (
-                    <MenuCard key={item._id} item={item} index={i} />
+                    <MenuCard key={item._id} item={item} restaurantId={restaurantId} index={i} />
                   ))}
                 </div>
               </div>

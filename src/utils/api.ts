@@ -327,3 +327,25 @@ export const getMenuItemsByRestaurantId = async (restaurantId: string) => {
     throw error;
   }
 };
+
+//fetch a specific menu item by ID
+export const getMenuItemById = async (restaurantId: string, menuItemId: string) => {
+  try {
+    const response = await fetch(`http://localhost:3010/api/restaurants/${restaurantId}/menu-items/${menuItemId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch menu item');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch menu item error:', error);
+    throw error;
+  }
+};
