@@ -7,7 +7,8 @@ import SignUp from "./pages/SignUp";
 import PaymentMethod from "@/components/Payment/PaymentMethod";
 import CardDetails from "@/components/Payment/CardDetails";
 import OrderConfirmation from "@/pages/OrderConfirmation";
-
+import RestaurantMenu from "./pages/RestaurantMenu";
+import ViewMenuItem from "./pages/ViewMenuItem";
 import Order from "./pages/Order";
 import Cart from "./pages/Cart";
 import ResturentRegister from "./pages/ResturentRegister";
@@ -49,8 +50,10 @@ import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
 import AllItem from "./pages/restaurants/AllItem";
 import AddNewItem from "./pages/restaurants/AddNewItem";
-import RestaurantMenu from "./pages/RestaurantMenu";
+
 import FoodHomePage from "./pages/FoodHomePage";
+import Restaurant from "./pages/Restaurant";
+import ResturentProfile from "./pages/restaurants/ResturentProfile";
 import MobileBottomNav from "./components/UI/MobileBottomNav";
 
 const ResturentRoutes = () => {
@@ -60,7 +63,7 @@ const ResturentRoutes = () => {
         <Route index element={<Navigate to="overview" replace />} />{" "}
         {/* Relative path */}
         <Route path="overview" element={<Overview />} />
-        <Route path="profile" element={<Profile />} />
+        <Route path="profile" element={<ResturentProfile />} />
         {/* Order-related routes grouped under /orders */}
         <Route path="orders">
           <Route path="new" element={<NewOrder />} />
@@ -90,6 +93,7 @@ function App() {
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/resturent-signup" element={<ResturentRegister />} />
+            <Route path="/restaurants" element={<Restaurant />} />
             <Route path="/payment-method" element={<PaymentMethod />} />
             <Route path="/card-details" element={<CardDetails />} />
             <Route path="/order-confirmation" element={<OrderConfirmation />} />
@@ -97,8 +101,12 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/account" element={<Profile />} />
             <Route
-              path="/restaurant/:restaurantId"
+              path="/restaurant/:restaurantId/menu"
               element={<RestaurantMenu />}
+            />
+            <Route
+              path="/restaurant/:restaurantId/menu/:menuItemId"
+              element={<ViewMenuItem />}
             />
             <Route path="menu" element={<FoodHomePage />} />
           </Route>
