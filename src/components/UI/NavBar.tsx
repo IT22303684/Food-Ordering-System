@@ -11,13 +11,12 @@ import { FiUser, FiLogOut } from "react-icons/fi";
 
 function NavBar() {
   const [isScrolled] = useState(false);
-  const [isInfoBarVisible ] = useState(true);
+  const [isInfoBarVisible] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const location = useLocation();
   const isHomePage = location.pathname === "/" || location.pathname === "/home";
   const { user, isAuthenticated, logout } = useAuth();
 
- 
   const handleLogout = () => {
     logout();
     // Redirect to home page after logout
@@ -34,9 +33,7 @@ function NavBar() {
     <>
       {/* Info Bar */}
       <div
-        className={`hidden md:block bg-orange-600 text-white text-sm transition-all duration-300 ${
-          "h-8" 
-        }`}
+        className={`hidden md:block bg-orange-600 text-white text-sm transition-all duration-300 ${"h-8"}`}
       >
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-8">

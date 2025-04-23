@@ -106,7 +106,12 @@ function Profile() {
   }
 
   return (
-    <div className="mx-auto  flex w-full mt-20 max-w-[1920px] flex-col p-5 lg:p-20">
+    <div className="relative mx-auto flex w-full mt-20 max-w-[1920px] flex-col p-5 lg:p-20">
+      {/* Grid Background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden bg-white">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#fb923c12_1px,transparent_1px),linear-gradient(to_bottom,#fb923c12_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+      </div>
+
       <Toaster position="top-right" reverseOrder={false} />
 
       <div className="flex w-full flex-col px-4 sm:px-6 md:px-8 lg:px-12">

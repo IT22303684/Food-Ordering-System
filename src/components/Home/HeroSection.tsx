@@ -46,7 +46,7 @@ function HeroSection() {
     <div className="relative lg:mt-0  h-[1000px] md:h-[1100px] lg:h-auto lg:min-h-screen w-full overflow-hidden bg-gray-50">
       {/* Background Layer with Pattern */}
       <div
-        className="absolute inset-0 z-0 opacity-40"
+        className="absolute inset-0 z-20 opacity-40"
         style={{
           backgroundImage: "url('/Home/banner_bg.jpg')",
           backgroundSize: "cover",
@@ -55,8 +55,13 @@ function HeroSection() {
         }}
       />
 
+       {/* Grid Background */}
+       <div className="absolute inset-0 z-15 overflow-hidden ">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#fb923c12_1px,transparent_1px),linear-gradient(to_bottom,#fb923c12_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]"></div>
+      </div>
+
       {/* Content Container */}
-      <div className="absolute  lg:top-20  inset-0 z-10 flex items-center justify-center">
+      <div className="absolute  lg:top-20  inset-0 z-30 flex items-center justify-center">
         <div className="container mx-auto px-4 md:px-8 lg:px-16 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Text Content */}
