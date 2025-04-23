@@ -282,6 +282,28 @@ export const getAllRestaurants = async (page = 1, limit = 10) => {
   }
 };
 
+// get restaurant details by id
+export const getRestaurantById = async (restaurantId: string) => {
+  try {
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch restaurant details');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch restaurant details error:', error);
+    throw error;
+  }
+};
+
 //--------------------------- Menu api's -------------------
 
 // get menu item by resturent id

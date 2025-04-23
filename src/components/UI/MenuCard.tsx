@@ -52,7 +52,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ item, index }) => {
       variants={cardVariants}
     >
       {/* Image */}
-      <div className="w-full sm:w-40 h-32 sm:h-auto flex-shrink-0 ">
+      <div className="w-full sm:w-40 h-32 sm:h-auto flex-shrink-0 py-6 pl-2">
         <motion.img
           src={item.mainImage || 'https://via.placeholder.com/160x120'}
           alt={item.name}
@@ -75,7 +75,7 @@ const MenuCard: React.FC<MenuCardProps> = ({ item, index }) => {
         <div className='flex flex-row gap-6 pt-2'>
             <p className="text-sm text-gray-600 mt-1">Rs .{item.price.toFixed(2)}</p>
 
-            <button className="text-sm  text-orange-600 pt-1 font-bold py-1 px-3 hover:bg-orange-600 hover:text-white">Buy Now</button>
+            <button className="text-sm  text-orange-600 pt-1 font-bold py-1 px-3 hover:bg-orange-600 hover:text-white hover:translate-x-2">Quick Add</button>
         </div>
        
       </div>
