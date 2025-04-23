@@ -281,3 +281,27 @@ export const getAllRestaurants = async (page = 1, limit = 10) => {
     throw error;
   }
 };
+
+//--------------------------- Menu api's -------------------
+
+// get menu item by resturent id
+export const getMenuItemsByRestaurantId = async (restaurantId: string) => {
+  try {
+    const response = await fetch(`http://localhost:3010/api/restaurants/${restaurantId}/menu-items`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch menu items');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch menu items error:', error);
+    throw error;
+  }
+};
