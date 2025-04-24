@@ -107,7 +107,7 @@ const Cart: React.FC = () => {
                   Your cart is empty
                 </div>
                 <Link
-                  to="/menu"
+                  to="/restaurants"
                   className="text-orange-500 hover:text-orange-600 font-medium"
                 >
                   Browse Menu
@@ -185,7 +185,7 @@ const Cart: React.FC = () => {
                               whileTap={{ scale: 0.95 }}
                               onClick={() =>
                                 updateItemQuantity(
-                                  item._id,
+                                  item.menuItemId,
                                   Math.max(1, item.quantity - 1)
                                 )
                               }
@@ -200,7 +200,10 @@ const Cart: React.FC = () => {
                               whileHover={{ scale: 1.1 }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() =>
-                                updateItemQuantity(item._id, item.quantity + 1)
+                                updateItemQuantity(
+                                  item.menuItemId,
+                                  item.quantity + 1
+                                )
                               }
                               className="w-8 h-8 flex items-center justify-center bg-green-500 text-white rounded-md hover:bg-green-600"
                             >
@@ -215,7 +218,7 @@ const Cart: React.FC = () => {
                           <motion.button
                             whileHover={{ scale: 1.1, color: "#EF4444" }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => removeItemFromCart(item._id)}
+                            onClick={() => removeItemFromCart(item.menuItemId)}
                             className="text-gray-400 hover:text-red-500"
                           >
                             <FaTrash size={16} />

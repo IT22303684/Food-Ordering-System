@@ -179,12 +179,20 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Menu item not found");
       }
 
+      console.log("Menu item details:", menuItem); // Add logging to see the response
+
       const cartItem = {
         menuItemId: menuItem._id,
-        restaurantId: menuItem.restaurantId,
+        restaurantId: restaurantId,
         name: menuItem.name,
         price: menuItem.price,
         quantity: quantity,
+        mainImage: menuItem.mainImage
+          ? menuItem.mainImage
+          : "https://via.placeholder.com/500",
+        thumbnailImage: menuItem.thumbnailImage
+          ? menuItem.thumbnailImage
+          : "https://via.placeholder.com/200",
       };
 
       console.log("Adding item to cart:", {
@@ -206,39 +214,71 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const updateItemQuantity = async (itemId: string, quantity: number) => {
+  const updateItemQuantity = async (menuItemId: string, quantity: number) => {
     try {
-      if (!user?.id) return;
-      await updateCartItem(user.id, itemId, quantity);
-      await fetchCart();
+      if (!user?.id) {
+        console.log("No user found");
+        toast.error("Please login to update cart");
+        return;
+      }
+
+      console.log("Updating item quantity:", {
+        userId: user.id,
+        menuItemId: menuItemId,
+        quantity: quantity,
+      });
+
+      await updateCartItem(user.id, menuItemId, quantity);
+      await fetchCart(); // Refresh cart after update
+      toast.success("Cart updated successfully");
     } catch (error) {
       console.error("Update quantity error:", error);
-      toast.error("Failed to update item quantity");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update item quantity"
+      );
     }
   };
 
-  const removeItemFromCart = async (itemId: string) => {
+  const removeItemFromCart = async (menuItemId: string) => {
     try {
-      if (!user?.id) return;
-      await removeCartItem(user.id, itemId);
+      if (!user?.id) {
+        console.log("No user found");
+        toast.error("Please login to remove items from cart");
+        return;
+      }
+
+      await removeCartItem(user.id, menuItemId);
       await fetchCart();
       toast.success("Item removed from cart");
     } catch (error) {
       console.error("Remove item error:", error);
-      toast.error("Failed to remove item from cart");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to remove item from cart"
+      );
     }
   };
 
   const clearCartItems = async () => {
     try {
-      if (!user?.id) return;
+      if (!user?.id) {
+        console.log("No user found");
+        toast.error("Please login to clear cart");
+        return;
+      }
+
       await clearCart(user.id);
       setCartItems([]);
       setCartTotal(0);
       toast.success("Cart cleared");
     } catch (error) {
       console.error("Clear cart error:", error);
-      toast.error("Failed to clear cart");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to clear cart"
+      );
     }
   };
 
