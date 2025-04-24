@@ -19,6 +19,9 @@ import AdminLayout from "./pages/admin/AdminLayout";
 import AllResturent from "./pages/admin/AllResturent";
 import RequestResturent from "./pages/admin/RequestResturent";
 import AddResturent from "./pages/admin/AddResturent";
+import AllUsers from "./pages/admin/AllUsers";
+import UserPermissions from "./pages/admin/UserPermissions";
+import UserSetting from "./pages/admin/UserSetting";
 
 const AdminRoutes = () => {
   return (
@@ -34,6 +37,14 @@ const AdminRoutes = () => {
           <Route path="request" element={<RequestResturent />} />
           <Route path="add" element={<AddResturent />} />
         </Route>
+        {/* user-related routes grouped under /orders */}
+        <Route path="user-management">
+          <Route path="all" element={<AllUsers />} />
+          <Route path="roles" element={<UserPermissions />} />
+          <Route path="add" element={<AddResturent />} /> 
+          <Route path="settings" element={<UserSetting />} />
+        </Route>
+
         {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>

@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { 
   FiCalendar, 
-  FiBook, 
   FiSettings, 
   FiPieChart, 
   FiUser, 
@@ -42,13 +41,15 @@ const Sidebar = ({ isSidebarOpen }: { isSidebarOpen: boolean }) => {
       ],
     },
     {
-      path: "/admin-dashboard/menu-management",
-      title: "Menu Management",
-      icon: <FiBook />,
+      path: "/admin-dashboard/user-management",
+      title: "User Management",
+      icon: <FiUser />,
       subItems: [
-        { path: "/admin-dashboard/menu-management/all", title: "All Items" },
-        { path: "/admin-dashboard/menu-management/add", title: "Add New Item" },
-        { path: "/admin-dashboard/menu-management/categories", title: "Categories" },
+        { path: "/admin-dashboard/user-management/all", title: "All Users" },
+        { path: "/admin-dashboard/user-management/add", title: "Add New User" },
+        { path: "/admin-dashboard/user-management/roles", title: "Roles & Permissions" },
+        { path: "/admin-dashboard/user-management/activity", title: "User Activity Logs" },
+        { path: "/admin-dashboard/user-management/settings", title: "User Settings" }
       ],
     },
     {
