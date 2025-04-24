@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import AdminResturentRequestTable from "../../components/UI/AdminResturentRequestTable";
+import AdminResturentRequestTable from "../../components/admin/AdminResturentRequestTable";
 import ResturentTitle from "../../components/UI/ResturentTitle";
 import { getAllRestaurants } from "../../utils/api";
 

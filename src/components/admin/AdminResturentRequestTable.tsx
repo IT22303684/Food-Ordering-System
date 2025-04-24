@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { updateRestaurantStatus } from "../../utils/api";
-import ConfirmationModal from "./ConfirmationModal";
+import ConfirmationModal from "../UI/ConfirmationModal";
 
 export interface Restaurant {
   _id: string;
