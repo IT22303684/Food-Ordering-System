@@ -280,7 +280,7 @@ const AdminResturentTable: React.FC<AdminResturentTableProps> = ({ headers, data
       </div>
 
       {/* Desktop Table View with Horizontal Scroll */}
-      <div className="hidden lg:block p-5 w-full text-sm rounded-md overflow-x-auto bg-white dark:bg-gray-600">
+      <div className="hidden lg:block p-5 w-full text-sm rounded-md overflow-x-auto bg-white dark:bg-gray-700">
         <table className="min-w-[1200px] w-full">
           <thead className="bg-gray-200 border-gray-200 dark:bg-gray-700 dark:border-gray-500">
             <tr>
@@ -350,7 +350,7 @@ const AdminResturentTable: React.FC<AdminResturentTableProps> = ({ headers, data
         {sortedRestaurants.map((restaurant) => (
           <div
             key={restaurant._id}
-            className={`border rounded-md p-4 shadow-md hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-500 ${
+            className={`border rounded-md p-4 bg-white shadow-md hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-500 ${
               isRestaurantBlocked(restaurant)
                 ? "bg-red-100 dark:bg-red-900"
                 : "bg-gray-100 dark:bg-gray-600"
