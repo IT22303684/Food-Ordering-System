@@ -5,7 +5,6 @@ import {
   FaTwitter,
   FaPinterestP,
   FaEnvelope,
-  FaShoppingCart,
 } from "react-icons/fa";
 import Slider from "react-slick"; // Import react-slick
 import "slick-carousel/slick/slick.css"; // Import slick-carousel CSS
@@ -37,7 +36,7 @@ const ViewMenuItem: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(1);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const { addItemToCart, cartItems, toggleCart } = useCart();
+  const { addItemToCart, toggleCart } = useCart();
 
   useEffect(() => {
     const fetchMenuItem = async () => {
@@ -136,18 +135,7 @@ const ViewMenuItem: React.FC = () => {
 
   return (
     <div className="w-full bg-white min-h-screen">
-      {/* Cart Toggle Button */}
-      <button
-        onClick={toggleCart}
-        className="fixed top-4 right-4 z-50 bg-orange-500 text-white p-3 rounded-full shadow-lg hover:bg-orange-600"
-      >
-        <FaShoppingCart />
-        {cartItems.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-            {cartItems.length}
-          </span>
-        )}
-      </button>
+    
 
       {/* Breadcrumb */}
       <div className="container mx-auto px-4 py-4 text-sm text-gray-600">
