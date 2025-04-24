@@ -121,7 +121,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {

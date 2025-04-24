@@ -9,7 +9,7 @@ import {
   FiHome, 
   FiSunset 
 } from "react-icons/fi";
-import { MdPayments, MdOutlinePowerSettingsNew } from "react-icons/md";
+import { MdPayments } from "react-icons/md";
 import { useState, useMemo } from "react";
 
 interface SubMenuItem {
@@ -107,7 +107,6 @@ const Sidebar = ({ isSidebarOpen }: { isSidebarOpen: boolean }) => {
       ],
     },
     { path: "/admin-dashboard/profile", title: "Profile", icon: <FiUser /> },
-    { path: "/admin-dashboard/logout", title: "Logout", icon: <MdOutlinePowerSettingsNew /> },
   ], []);
 
   const toggleMenu = (path: string) => {
