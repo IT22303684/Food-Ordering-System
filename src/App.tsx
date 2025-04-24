@@ -58,7 +58,8 @@ import FoodHomePage from "./pages/FoodHomePage";
 import Restaurant from "./pages/Restaurant";
 import ResturentProfile from "./pages/restaurants/ResturentProfile";
 import MobileBottomNav from "./components/UI/MobileBottomNav";
-
+import Checkout from "./pages/Checkout";
+import OrdersList from "./pages/OrdersList";
 const ResturentRoutes = () => {
   return (
     <Routes>
@@ -116,8 +117,10 @@ function App() {
                 path="/order-confirmation"
                 element={<OrderConfirmation />}
               />
-              <Route path="/orders" element={<Order />} />
+              <Route path="/orders" element={<OrdersList />} />
+              <Route path="/order/:orderId" element={<Order />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/account" element={<Profile />} />
               <Route
                 path="/restaurant/:restaurantId/menu"
