@@ -20,6 +20,7 @@ export interface Restaurant {
   country: string;
   email: string;
   status: string;
+
 }
 
 interface AdminResturentTableProps {
@@ -70,7 +71,7 @@ const AdminResturentTable: React.FC<AdminResturentTableProps> = ({ headers, data
 
   // Handle block/unblock action
   const handleBlock = (restaurantId: string, restaurantName: string, isBlocked: boolean) => {
-    const newStatus = isBlocked ? 'approved' : 'blocked';
+    const newStatus = isBlocked ? 'approved' : 'approved';
     openConfirmationModal(
       isBlocked ? 'Confirm Unblock' : 'Confirm Block',
       `Are you sure you want to ${isBlocked ? 'unblock' : 'block'} ${restaurantName}?`,

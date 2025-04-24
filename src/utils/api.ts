@@ -329,7 +329,7 @@ export const deleteRestaurant = async (restaurantId: string) => {
   }
 };
 
-// Update restaurant status (block/unblock)
+// Update restaurant status
 export const updateRestaurantStatus = async (restaurantId: string, status: string) => {
   try {
     const token = localStorage.getItem('token');
