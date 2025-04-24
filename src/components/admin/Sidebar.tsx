@@ -48,7 +48,6 @@ const Sidebar = ({ isSidebarOpen }: { isSidebarOpen: boolean }) => {
         { path: "/admin-dashboard/user-management/all", title: "All Users" },
         { path: "/admin-dashboard/user-management/add", title: "Add New User" },
         { path: "/admin-dashboard/user-management/roles", title: "Roles & Permissions" },
-        { path: "/admin-dashboard/user-management/activity", title: "User Activity Logs" },
         { path: "/admin-dashboard/user-management/settings", title: "User Settings" }
       ],
     },

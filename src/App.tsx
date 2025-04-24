@@ -22,6 +22,7 @@ import AddResturent from "./pages/admin/AddResturent";
 import AllUsers from "./pages/admin/AllUsers";
 import UserPermissions from "./pages/admin/UserPermissions";
 import UserSetting from "./pages/admin/UserSetting";
+import AddUser from "./pages/admin/AddUser";
 
 const AdminRoutes = () => {
   return (
@@ -41,7 +42,7 @@ const AdminRoutes = () => {
         <Route path="user-management">
           <Route path="all" element={<AllUsers />} />
           <Route path="roles" element={<UserPermissions />} />
-          <Route path="add" element={<AddResturent />} /> 
+          <Route path="add" element={<AddUser />} /> 
           <Route path="settings" element={<UserSetting />} />
         </Route>
 
