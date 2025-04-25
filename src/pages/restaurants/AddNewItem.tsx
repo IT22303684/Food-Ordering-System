@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MenuItem } from '../../pages/restaurants/AllItem'; 
+import { MenuItem } from './ManageMenuItems'; 
 import ResturentTitle from "../../components/UI/ResturentTitle";
 
 const AddNewItem = () => {

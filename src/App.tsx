@@ -60,9 +60,9 @@ import PreparingOrder from "./pages/restaurants/PreparingOrder";
 import ReadyOrder from "./pages/restaurants/ReadyOrder";
 import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
-import AllItem from "./pages/restaurants/AllItem";
+import ManageMenuItems from "./pages/restaurants/ManageMenuItems";
 import AddNewItem from "./pages/restaurants/AddNewItem";
-
+import AllMenuItems from "./pages/restaurants/AllMenuItems";
 import FoodHomePage from "./pages/FoodHomePage";
 import Restaurant from "./pages/Restaurant";
 import ResturentProfile from "./pages/restaurants/ResturentProfile";
@@ -86,8 +86,10 @@ const ResturentRoutes = () => {
         </Route>
         {/* menu-related routes grouped under /menu-management */}
         <Route path="menu-management">
-          <Route path="all" element={<AllItem />} />
+          <Route path="all" element={<AllMenuItems />} />
+          <Route path="manage" element={<ManageMenuItems />} />
           <Route path="add" element={<AddNewItem />} />
+          
         </Route>
         {/* Add more routes as needed to match sidebar */}
       </Route>

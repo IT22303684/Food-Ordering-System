@@ -14,7 +14,7 @@ interface MenuItem {
     isAvailable: boolean;
 }
 
-const AllItem = () => {
+const ManageMenuItems = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
@@ -130,7 +130,7 @@ const AllItem = () => {
   return (
     <>
       <div className="p-4">
-        <ResturentTitle text="All Menu Items" />
+        <ResturentTitle text="Menu Items Management " />
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <input
             type="text"
@@ -181,4 +181,4 @@ const AllItem = () => {
   );
 };
 
-export default AllItem;
+export default ManageMenuItems;
