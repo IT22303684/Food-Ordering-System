@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { updateMenuItem } from '../../utils/api';
+import CategorySelect from '../UI/CategorySelect';
 
 interface MenuItem {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    category: string;
-    imageUrl?: string;
-    isAvailable: boolean;
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string; // Category _id
+  imageUrl?: string;
+  isAvailable: boolean;
 }
 
 interface EditMenuItemModalProps {
@@ -116,19 +117,12 @@ const EditMenuItemModal = ({ item, restaurantId, onClose, onSave }: EditMenuItem
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium dark:text-gray-300">Category</label>
-            <select
-              name="category"
+            <CategorySelect
+              restaurantId={restaurantId}
               value={formData.category}
               onChange={handleInputChange}
-              className="w-full p-2 border rounded dark:bg-gray-700 dark:text-white"
               required
-            >
-              <option value="Main Course">Main Course</option>
-              <option value="Appetizers">Appetizers</option>
-              <option value="Desserts">Desserts</option>
-              <option value="Sides">Sides</option>
-              <option value="Beverages">Beverages</option>
-            </select>
+            />
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium dark:text-gray-300">Available</label>

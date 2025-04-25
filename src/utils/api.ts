@@ -688,6 +688,56 @@ export const deleteMenuItem = async (restaurantId: string, menuItemId: string) =
   }
 };
 
+// add menu item
+export const addMenuItem = async (
+  restaurantId: string,
+  data: {
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    isAvailable: boolean;
+  },
+  files?: {
+    mainImage?: File;
+    thumbnailImage?: File;
+  }
+) => {
+  const token = localStorage.getItem('token');
+  const formData = new FormData();
+  
+  // Append text fields
+  formData.append('name', data.name);
+  formData.append('description', data.description);
+  formData.append('price', data.price.toString());
+  formData.append('category', data.category);
+  formData.append('isAvailable', data.isAvailable.toString());
+
+  // Append files if provided
+  if (files?.mainImage) {
+    formData.append('mainImage', files.mainImage);
+  }
+  if (files?.thumbnailImage) {
+    formData.append('thumbnailImage', files.thumbnailImage);
+  }
+
+  const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/menu-items`, {
+    method: 'POST',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      // Do not set Content-Type for FormData; browser sets it with boundary
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to add menu item');
+  }
+
+  return response.json();
+};
+
 //--------------------------- Category APIs -------------------
 
 interface CategoryData {
