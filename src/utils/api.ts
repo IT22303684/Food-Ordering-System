@@ -537,16 +537,26 @@ export const updateRestaurantStatus = async (restaurantId: string, status: strin
   }
 };
 
-//--------------------------- Menu api's -------------------
+//--------------------------- Menu items api's -------------------
 
-// get menu item by resturent id
-export const getMenuItemsByRestaurantId = async (restaurantId: string) => {
+// Get menu items by restaurant ID (public or authenticated)
+export const getMenuItemsByRestaurantId = async (restaurantId: string, isAuthenticated: boolean = false) => {
   try {
-    const response = await fetch(`http://localhost:3010/api/restaurants/${restaurantId}/menu-items`, {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (isAuthenticated) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/menu-items`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -561,15 +571,24 @@ export const getMenuItemsByRestaurantId = async (restaurantId: string) => {
   }
 };
 
-//fetch a specific menu item by ID
+// Fetch a specific menu item by ID
 export const getMenuItemById = async (restaurantId: string, menuItemId: string) => {
   try {
-    const response = await fetch(`http://localhost:3010/api/restaurants/${restaurantId}/menu-items/${menuItemId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -582,3 +601,91 @@ export const getMenuItemById = async (restaurantId: string, menuItemId: string) 
     throw error;
   }
 };
+
+// Update a menu item
+export const updateMenuItem = async (
+  restaurantId: string,
+  menuItemId: string,
+  data: Partial<{
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    isAvailable: boolean;
+  }>,
+  files?: { mainImage?: File; thumbnailImage?: File }
+) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const formData = new FormData();
+    // Append text fields
+    if (data.name) formData.append('name', data.name);
+    if (data.description) formData.append('description', data.description);
+    if (data.price !== undefined) formData.append('price', data.price.toString());
+    if (data.category) formData.append('category', data.category);
+    if (data.isAvailable !== undefined) formData.append('isAvailable', data.isAvailable.toString());
+
+    // Append files if provided
+    if (files?.mainImage) formData.append('mainImage', files.mainImage);
+    if (files?.thumbnailImage) formData.append('thumbnailImage', files.thumbnailImage);
+
+    const response = await fetch(
+      `${BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}`,
+      {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Do NOT set Content-Type; fetch sets it automatically for FormData
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update menu item');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Update menu item error:', error);
+    throw error;
+  }
+};
+
+// Delete a menu item
+export const deleteMenuItem = async (restaurantId: string, menuItemId: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete menu item');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Delete menu item error:', error);
+    throw error;
+  }
+};
+
+

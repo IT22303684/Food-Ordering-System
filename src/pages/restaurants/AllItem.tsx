@@ -1,7 +1,10 @@
-import ResturentItemCard from "../../components/UI/ResturentItemCard";
-import ResturentTitle from "../../components/UI/ResturentTitle";
+import { useState, useEffect } from 'react';
+import ResturentItemCard from '../../components/restaurants/ResturentItemCard';
+import ResturentTitle from '../../components/UI/ResturentTitle';
+import EditMenuItemModal from '../../components/restaurants/EditMenuItemModal';
+import { getProfile, getMenuItemsByRestaurantId } from '../../utils/api';
 
-export interface MenuItem {
+interface MenuItem {
     id: string;
     name: string;
     description: string;
@@ -11,106 +14,169 @@ export interface MenuItem {
     isAvailable: boolean;
 }
 
-export const menuItemData: MenuItem[] = [
-    {
-        id: "1",
-        name: "Margherita Pizza",
-        description: "Classic pizza with fresh tomatoes, mozzarella, and basil",
-        price: 12.99,
-        category: "Main Course",
-        imageUrl: "https://example.com/images/margherita-pizza.jpg",
-        isAvailable: true
-    },
-    {
-        id: "2",
-        name: "Chicken Wings",
-        description: "Spicy buffalo wings served with blue cheese dip",
-        price: 8.99,
-        category: "Appetizers",
-        imageUrl: "https://example.com/images/chicken-wings.jpg",
-        isAvailable: true
-    },
-    {
-        id: "3",
-        name: "Chocolate Lava Cake",
-        description: "Warm chocolate cake with a gooey center, served with vanilla ice cream",
-        price: 6.49,
-        category: "Desserts",
-        isAvailable: true
-    },
-    {
-        id: "4",
-        name: "Caesar Salad",
-        description: "Crisp romaine lettuce with croutons, parmesan, and Caesar dressing",
-        price: 7.99,
-        category: "Sides",
-        imageUrl: "https://example.com/images/caesar-salad.jpg",
-        isAvailable: true
-    },
-    {
-        id: "5",
-        name: "Pepperoni Pizza",
-        description: "Traditional pizza topped with pepperoni and extra cheese",
-        price: 14.99,
-        category: "Main Course",
-        isAvailable: false
-    },
-    {
-        id: "6",
-        name: "Mojito",
-        description: "Refreshing cocktail with mint, lime, and soda",
-        price: 5.99,
-        category: "Beverages",
-        imageUrl: "https://example.com/images/mojito.jpg",
-        isAvailable: true
-    },
-    {
-        id: "7",
-        name: "Grilled Salmon",
-        description: "Fresh salmon fillet grilled to perfection with lemon butter sauce",
-        price: 18.99,
-        category: "Main Course",
-        imageUrl: "https://example.com/images/grilled-salmon.jpg",
-        isAvailable: true
-    },
-    {
-        id: "8",
-        name: "French Fries",
-        description: "Crispy golden fries served with ketchup",
-        price: 3.99,
-        category: "Sides",
-        isAvailable: true
-    },
-    {
-        id: "9",
-        name: "Tiramisu",
-        description: "Classic Italian dessert withcoffee-soaked ladyfingers and mascarpone",
-        price: 7.49,
-        category: "Desserts",
-        imageUrl: "https://example.com/images/tiramisu.jpg",
-        isAvailable: false
-    },
-    {
-        id: "10",
-        name: "Iced Coffee",
-        description: "Chilled coffee with milk and a hint of vanilla",
-        price: 4.49,
-        category: "Beverages",
-        isAvailable: true
-    }
-];
-
 const AllItem = () => {
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [editItem, setEditItem] = useState<MenuItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  useEffect(() => {
+    const fetchMenuItems = async () => {
+      try {
+        // Step 1: Fetch user profile to get userId (assuming userId = restaurantId)
+        const profile = await getProfile();
+        const fetchedRestaurantId = profile._id; // Assuming _id is the userId/restaurantId
+        setRestaurantId(fetchedRestaurantId);
+
+        // Step 2: Fetch menu items (authenticated request)
+        const items = await getMenuItemsByRestaurantId(fetchedRestaurantId, true);
+
+        // Map backend response to MenuItem interface
+        const formattedItems: MenuItem[] = items.map((item: any) => ({
+          id: item._id,
+          name: item.name,
+          description: item.description,
+          price: item.price,
+          category: item.category,
+          imageUrl: item.mainImage || 'https://via.placeholder.com/300x200',
+          isAvailable: item.isAvailable,
+        }));
+
+        setMenuItems(formattedItems);
+        setFilteredItems(formattedItems); // Initialize filtered items
+      } catch (err: any) {
+        setError(err.message || 'Failed to load menu items');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMenuItems();
+  }, []);
+
+  // Handle search and category filtering
+  useEffect(() => {
+    let filtered = menuItems;
+
+    // Filter by search query
+    if (searchQuery) {
+      filtered = filtered.filter((item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter((item) => item.category === selectedCategory);
+    }
+
+    setFilteredItems(filtered);
+  }, [searchQuery, selectedCategory, menuItems]);
+
+  const handleEdit = (item: MenuItem) => {
+    setEditItem(item); // Open modal with item data
+  };
+
+  const handleDelete = (id: string) => {
+    setMenuItems((prevItems) => prevItems.filter((item) => item.id !== id));
+    setFilteredItems((prevItems) => prevItems.filter((item) => item.id !== id));
+  };
+
+  const handleSaveEdit = (updatedItem: MenuItem) => {
+    setMenuItems((prevItems) =>
+      prevItems.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+    );
+    setFilteredItems((prevItems) =>
+      prevItems.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+    );
+    setEditItem(null); // Close modal
+  };
+
+  const handleCloseModal = () => {
+    setEditItem(null); // Close modal
+  };
+
+  const categories = [
+    'All',
+    'Main Course',
+    'Appetizers',
+    'Desserts',
+    'Sides',
+    'Beverages',
+  ];
+
+  if (loading) {
+    return (
+      <div className="p-4">
+        <ResturentTitle text="All Menu Items" />
+        <div className="text-center">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <ResturentTitle text="All Menu Items" />
+        <div className="text-center text-red-600">Error: {error}</div>
+      </div>
+    );
+  }
+
   return (
     <>
-        <div className='p-4'>
-            <ResturentTitle text="All Menu Items"/>
+      <div className="p-4">
+        <ResturentTitle text="All Menu Items" />
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full sm:w-1/2 p-2 border rounded dark:bg-gray-700 dark:text-white"
+          />
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="w-full sm:w-1/4 p-2 border rounded dark:bg-gray-700 dark:text-white"
+          >
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-        {menuItemData.map((item) => (
-            <ResturentItemCard key={item.id} data={item} />
-        ))}
-        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 p-6">
+        {filteredItems.length > 0 ? (
+          filteredItems.map((item) => (
+            <ResturentItemCard
+              key={item.id}
+              data={item}
+              restaurantId={restaurantId || ''}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          ))
+        ) : (
+          <div className="col-span-full text-center text-gray-600">
+            No menu items found.
+          </div>
+        )}
+      </div>
+      {editItem && (
+        <EditMenuItemModal
+          item={editItem}
+          restaurantId={restaurantId || ''}
+          onClose={handleCloseModal}
+          onSave={handleSaveEdit}
+        />
+      )}
     </>
   );
 };
