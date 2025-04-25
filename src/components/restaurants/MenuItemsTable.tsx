@@ -5,24 +5,34 @@ interface MenuItem {
     name: string;
     description: string;
     price: number;
-    category: string;
+    category: string; // Category _id
     imageUrl?: string;
     thumbnailImage?: string;
     isAvailable: boolean;
 }
 
-interface MenuItemsTableProps {
-  data: MenuItem[];
+interface Category {
+    _id: string;
+    name: string;
 }
 
+interface MenuItemsTableProps {
+  data: MenuItem[];
+  categories?: Category[];
+}
 
-
-const MenuItemsTable: React.FC<MenuItemsTableProps> = ({ data }) => {
+const MenuItemsTable: React.FC<MenuItemsTableProps> = ({ data, categories = [] }) => {
   const [menuItems] = useState<MenuItem[]>(data);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   // Table headers
   const headers: string[] = ['Image', 'Thumbnail Image', 'Name', 'Description', 'Price', 'Category', 'Availability'];
+
+  // Dynamic categories from data
+  const dynamicCategories = ['all', ...Array.from(new Set(menuItems.map(item => item.category))).sort()];
+
+  // Map category _id to name
+  const categoryMap = new Map<string, string>(categories.map(cat => [cat._id, cat.name]));
 
   // Map headers to data fields
   const getFieldValue = (item: MenuItem, header: string) => {
@@ -50,7 +60,7 @@ const MenuItemsTable: React.FC<MenuItemsTableProps> = ({ data }) => {
       case 'price':
         return `$${item.price.toFixed(2)}`;
       case 'category':
-        return item.category;
+        return categoryMap.get(item.category) || `Category ${item.category}`; // Fallback to _id
       case 'availability':
         return (
           <span className={getStatusStyles(item.isAvailable)}>
@@ -82,16 +92,6 @@ const MenuItemsTable: React.FC<MenuItemsTableProps> = ({ data }) => {
       : `${baseStyles} bg-red-100 text-red-600 dark:bg-red-700 dark:text-red-200`;
   };
 
-  // Available categories
-  const categories = [
-    'all',
-    'Main Course',
-    'Appetizers',
-    'Desserts',
-    'Sides',
-    'Beverages',
-  ];
-
   return (
     <>
       {/* Category Filter Controls */}
@@ -99,11 +99,11 @@ const MenuItemsTable: React.FC<MenuItemsTableProps> = ({ data }) => {
         <select
           value={categoryFilter}
           onChange={(e) => setCategoryFilter(e.target.value)}
-          className="w-full sm:w-40 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full sm:w-40 px-3 py-2 rounded-full bg-gray-100 border border-gray-300 dark:border-gray-500  dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
         >
-          {categories.map((category) => (
+          {dynamicCategories.map((category) => (
             <option key={category} value={category.toLowerCase()}>
-              {category}
+              {category === 'all' ? 'All' : categoryMap.get(category) || `Category ${category}`}
             </option>
           ))}
         </select>
@@ -112,12 +112,12 @@ const MenuItemsTable: React.FC<MenuItemsTableProps> = ({ data }) => {
       {/* Desktop Table View with Horizontal Scroll */}
       <div className="hidden lg:block p-5 w-full text-sm rounded-md overflow-x-auto bg-white dark:bg-gray-700">
         <table className="min-w-[1000px] w-full">
-          <thead className="bg-gray-200 border-gray-200 dark:bg-gray-700 dark:border-gray-500">
+          <thead className="bg-gray-300 border-gray-200 dark:bg-gray-800 dark:border-gray-500">
             <tr>
               {headers.map((header, index) => (
                 <th
                   key={index}
-                  className="text-start py-4 px-6 font-semibold text-gray-600 dark:text-gray-200"
+                  className="text-start py-4 px-6 font-semibold text-gray-700 dark:text-gray-200"
                 >
                   {header}
                 </th>
@@ -148,7 +148,7 @@ const MenuItemsTable: React.FC<MenuItemsTableProps> = ({ data }) => {
         {sortedItems.map((item) => (
           <div
             key={item.id}
-            className="border rounded-md p-4 shadow-md hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-500 bg-gray-100 dark:bg-gray-600"
+            className="border rounded-md p-4 shadow-md hover:shadow-lg transition-shadow border-gray-200 dark:border-gray-500 bg-white dark:bg-gray-600"
           >
             <div className="space-y-2">
               {headers.map((header, idx) => (

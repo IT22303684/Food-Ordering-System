@@ -2,10 +2,11 @@ import { FaMoon, FaSun } from "react-icons/fa";
 import { HiOutlineMenuAlt2 } from "react-icons/hi";
 import { FiUser } from "react-icons/fi";
 import { MdOutlinePowerSettingsNew } from "react-icons/md";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
+import { getRestaurantByUserId } from "@/utils/api";
 
 interface HeaderProps {
   toggleDarkMode: () => void;
@@ -17,6 +18,23 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [logo, setRestaurantLogo] = useState<string | null>(null);
+
+  // Fetch restaurant logo
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        const response = await getRestaurantByUserId();
+        setRestaurantLogo(response.restaurant.logo || null);
+      } catch (error: any) {
+        console.error('Failed to fetch restaurant logo:', error);
+        setRestaurantLogo(null);
+      }
+    };
+    if (isAuthenticated) {
+      fetchRestaurant();
+    }
+  }, [isAuthenticated]);
 
   const handleLogout = async () => {
     if (!isAuthenticated) {
@@ -46,9 +64,6 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
     setTimeout(() => setIsDropdownOpen(false), 200); // Delay to allow click on dropdown items
   };
 
-  // Define role constant (adjust based on your backend role naming)
-  const RESTAURANT_ROLE = "RESTAURANT";
-
   return (
     <>
       <Toaster position="top-right" reverseOrder={false} />
@@ -63,17 +78,13 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
               >
                 <HiOutlineMenuAlt2 className="text-2xl" />
               </button>
-              <Link to="/resturent-dashboard/overview" className="flex ms-2 md:me-24">
-                {isAuthenticated &&
-                user?.role?.toUpperCase() === RESTAURANT_ROLE.toUpperCase() ? (
-                  <span className="self-center text-xl font-semibold sm:text-xl whitespace-nowrap dark:text-white">
-                    {user?.email || "Restaurant Dashboard"}
-                  </span>
-                ) : (
-                  <span className="self-center text-xl font-semibold sm:text-xl whitespace-nowrap dark:text-white">
-                    Restaurant Dashboard
-                  </span>
-                )}
+              <Link to="/resturent-dashboard/overview" className="flex items-center ms-2 md:me-24">
+                <img
+                  src={logo || '/images/default-logo.png'}
+                  alt="Restaurant Logo"
+                  className="h-8 w-8 rounded-full object-cover mr-2 shrink-0 border border-gray-200 dark:border-gray-600"
+                />
+                
               </Link>
             </div>
             <div className="flex items-center space-x-4">

@@ -13,6 +13,7 @@ import Order from "./pages/Order";
 import Cart from "./pages/Cart";
 import ResturentRegister from "./pages/ResturentRegister";
 import Profile from "./pages/Profile";
+import TermsAndConditions from "./pages/TermsAndConditions";
 
 //-------------- admin--------------------------------------
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -61,7 +62,7 @@ import ReadyOrder from "./pages/restaurants/ReadyOrder";
 import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
 import ManageMenuItems from "./pages/restaurants/ManageMenuItems";
-import AddNewItem from "./pages/restaurants/AddNewItem";
+import AddNewMenuItem from "./pages/restaurants/AddNewMenuItem";
 import AllMenuItems from "./pages/restaurants/AllMenuItems";
 import AddCategories from "./pages/restaurants/AddCategories";
 import CategoryManagement from "./pages/restaurants/CategoryManagement";
@@ -92,11 +93,10 @@ const ResturentRoutes = () => {
         <Route path="menu-management">
           <Route path="all" element={<AllMenuItems />} />
           <Route path="manage" element={<ManageMenuItems />} />
-          <Route path="add" element={<AddNewItem />} />
+          <Route path="add" element={<AddNewMenuItem />} />
         </Route>
         {/* category-related routes grouped under /menu-management */}
         <Route path="category">
-          <Route path="all" element={<AllMenuItems />} />
           <Route path="manage" element={<CategoryManagement />} />
           <Route path="add" element={<AddCategories />} />
         </Route> 
@@ -123,6 +123,7 @@ function App() {
             <Route path="/orders" element={<Order />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/account" element={<Profile />} />
+            <Route path="/terms-condition" element={<TermsAndConditions />} />
             <Route
               path="/restaurant/:restaurantId/menu"
               element={<RestaurantMenu />}

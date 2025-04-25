@@ -15,11 +15,12 @@ interface MenuItem {
 interface ResturentItemCardProps {
   data: MenuItem;
   restaurantId: string;
+  categoryName: string;
   onEdit: (item: MenuItem) => void;
   onDelete: (id: string) => void;
 }
 
-const ResturentItemCard = ({ data, restaurantId, onEdit, onDelete }: ResturentItemCardProps) => {
+const ResturentItemCard = ({ data, restaurantId, categoryName, onEdit, onDelete }: ResturentItemCardProps) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const handleOpenDeleteModal = () => {
@@ -33,7 +34,7 @@ const ResturentItemCard = ({ data, restaurantId, onEdit, onDelete }: ResturentIt
   const handleConfirmDelete = async () => {
     try {
       await deleteMenuItem(restaurantId, data.id);
-      onDelete(data.id); // Notify parent to update state
+      onDelete(data.id);
       setIsDeleteModalOpen(false);
     } catch (error) {
       console.error('Delete menu item error:', error);
@@ -51,10 +52,12 @@ const ResturentItemCard = ({ data, restaurantId, onEdit, onDelete }: ResturentIt
         />
         <div className="p-4">
           <h2 className="font-bold text-lg text-gray-800 dark:text-white">{data.name}</h2>
-          <span className='text-sm font-semibold'>category : </span>
-          <span className="inline-block bg-blue-100 text-gray-800 dark:bg-gray-500 dark:text-blue-100 px-2 py-0.5 rounded-full text-xs font-medium mt-1 mx-2">
-            {data.category}
-          </span>
+          <div className="mt-1">
+            <span className="text-sm font-semibold text-gray-800 dark:text-gray-300">Category: </span>
+            <span className="inline-block bg-blue-100 text-gray-800 dark:bg-gray-500 dark:text-blue-100 px-2 py-0.5 rounded-full text-xs font-medium">
+              {categoryName}
+            </span>
+          </div>
           <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
             {data.description}
           </p>

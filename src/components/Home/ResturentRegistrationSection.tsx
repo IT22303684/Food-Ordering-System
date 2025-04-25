@@ -1,5 +1,5 @@
 import { useState, ChangeEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 import CustomButton from "@/components/UI/CustomButton";
@@ -435,7 +435,7 @@ const ResturentRegistrationSection = () => {
                       onChange={handleChange}
                       className="mr-2"
                     />
-                    I agree to the Terms and Conditions
+                    I agree to the <Link to="/terms-condition"><span className="text-orange-500 hover:text-orange-700 mx-2"> Terms and Conditions </span></Link>
                   </label>
                   {errors.agreeTerms && (
                     <p className="mt-2 text-xs text-red-500">{errors.agreeTerms}</p>

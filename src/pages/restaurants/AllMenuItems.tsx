@@ -1,38 +1,42 @@
 import { useState, useEffect } from 'react';
-import ResturentTitle from '../../components/UI/ResturentTitle';
+import RestaurantTitle from '../../components/UI/ResturentTitle'; // Fixed typo
 import MenuItemsTable from '../../components/restaurants/MenuItemsTable';
-import { getProfile, getMenuItemsByRestaurantId } from '../../utils/api';
+import { getProfile, getMenuItemsByRestaurantId, getCategories } from '../../utils/api';
 
 interface MenuItem {
     id: string;
     name: string;
     description: string;
     price: number;
-    category: string;
+    category: string; // Category _id
     imageUrl?: string;
     thumbnailImage?: string;
     isAvailable: boolean;
 }
 
+interface Category {
+    _id: string;
+    name: string;
+}
+
 const AllMenuItems = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
 
   useEffect(() => {
-    const fetchMenuItems = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        // Fetch user profile to get userId (assuming userId = restaurantId)
+        // Fetch user profile to get restaurantId
         const profile = await getProfile();
         const restaurantId = profile._id;
 
-        // Fetch menu items (authenticated request)
+        // Fetch menu items
         const items = await getMenuItemsByRestaurantId(restaurantId, true);
-
-        // Map backend response to MenuItem interface
         const formattedItems: MenuItem[] = items.map((item: any) => ({
           id: item._id,
           name: item.name,
@@ -43,6 +47,15 @@ const AllMenuItems = () => {
           thumbnailImage: item.thumbnailImage || 'https://via.placeholder.com/50x50',
           isAvailable: item.isAvailable,
         }));
+
+        // Fetch categories
+        try {
+          const categoryData = await getCategories(restaurantId);
+          setCategories(categoryData);
+        } catch (catErr: any) {
+          console.error('Failed to fetch categories:', catErr);
+          // Continue without categories; MenuItemsTable will use _id
+        }
 
         setMenuItems(formattedItems);
         setTotalPages(1); // Update if API supports pagination
@@ -55,7 +68,7 @@ const AllMenuItems = () => {
       }
     };
 
-    fetchMenuItems();
+    fetchData();
   }, [page]);
 
   const handlePageChange = (newPage: number) => {
@@ -66,12 +79,12 @@ const AllMenuItems = () => {
 
   return (
     <div className="p-4">
-      <ResturentTitle text="Menu Items" />
+      <RestaurantTitle text="Menu Items" />
       {loading && <div className="text-center p-4 text-gray-600 dark:text-gray-300">Loading...</div>}
       {error && <div className="text-center p-4 text-red-500">{error}</div>}
       {!loading && !error && (
         <>
-          <MenuItemsTable data={menuItems} />
+          <MenuItemsTable data={menuItems} categories={categories} />
           <div className="flex justify-center mt-4 space-x-2">
             <button
               onClick={() => handlePageChange(page - 1)}
@@ -79,7 +92,7 @@ const AllMenuItems = () => {
               className={`px-4 py-2 rounded-lg ${
                 page === 1
                   ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                  : 'bg-indigo-500 text-white hover:bg-orange-600'
               }`}
             >
               Previous
@@ -93,7 +106,7 @@ const AllMenuItems = () => {
               className={`px-4 py-2 rounded-lg ${
                 page === totalPages
                   ? 'bg-gray-300 cursor-not-allowed'
-                  : 'bg-indigo-500 text-white hover:bg-indigo-600'
+                  : 'bg-orange-500 text-white hover:bg-orange-600'
               }`}
             >
               Next

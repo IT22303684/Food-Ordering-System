@@ -57,7 +57,7 @@ const CategoryManagementPage: React.FC = () => {
 
   return (
     <div className="p-4">
-      <RestaurantTitle text="Category Management" />
+      <RestaurantTitle text="Create New Category" />
       {loading && <div className="text-center p-4 text-gray-600 dark:text-gray-300">Loading...</div>}
       {error && <div className="text-center p-4 text-red-500">{error}</div>}
       {!loading && !error && (

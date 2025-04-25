@@ -2,40 +2,45 @@ import { useState, useEffect } from 'react';
 import ResturentItemCard from '../../components/restaurants/ResturentItemCard';
 import ResturentTitle from '../../components/UI/ResturentTitle';
 import EditMenuItemModal from '../../components/restaurants/EditMenuItemModal';
-import { getProfile, getMenuItemsByRestaurantId } from '../../utils/api';
+import { getProfile, getMenuItemsByRestaurantId, getCategories } from '../../utils/api';
 
 interface MenuItem {
     id: string;
     name: string;
     description: string;
     price: number;
-    category: string;
+    category: string; // Category _id
     imageUrl?: string;
     isAvailable: boolean;
+}
+
+interface Category {
+    _id: string;
+    name: string;
 }
 
 const ManageMenuItems = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editItem, setEditItem] = useState<MenuItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
-    const fetchMenuItems = async () => {
+    const fetchData = async () => {
       try {
-        // Step 1: Fetch user profile to get userId (assuming userId = restaurantId)
+        setLoading(true);
+        // Fetch user profile to get restaurantId
         const profile = await getProfile();
-        const fetchedRestaurantId = profile._id; // Assuming _id is the userId/restaurantId
+        const fetchedRestaurantId = profile._id;
         setRestaurantId(fetchedRestaurantId);
 
-        // Step 2: Fetch menu items (authenticated request)
+        // Fetch menu items
         const items = await getMenuItemsByRestaurantId(fetchedRestaurantId, true);
-
-        // Map backend response to MenuItem interface
         const formattedItems: MenuItem[] = items.map((item: any) => ({
           id: item._id,
           name: item.name,
@@ -46,8 +51,16 @@ const ManageMenuItems = () => {
           isAvailable: item.isAvailable,
         }));
 
+        // Fetch categories
+        try {
+          const categoryData = await getCategories(fetchedRestaurantId);
+          setCategories(categoryData);
+        } catch (catErr: any) {
+          console.error('Failed to fetch categories:', catErr);
+        }
+
         setMenuItems(formattedItems);
-        setFilteredItems(formattedItems); // Initialize filtered items
+        setFilteredItems(formattedItems);
       } catch (err: any) {
         setError(err.message || 'Failed to load menu items');
       } finally {
@@ -55,7 +68,7 @@ const ManageMenuItems = () => {
       }
     };
 
-    fetchMenuItems();
+    fetchData();
   }, []);
 
   // Handle search and category filtering
@@ -70,7 +83,7 @@ const ManageMenuItems = () => {
     }
 
     // Filter by category
-    if (selectedCategory !== 'All') {
+    if (selectedCategory !== 'all') {
       filtered = filtered.filter((item) => item.category === selectedCategory);
     }
 
@@ -78,7 +91,7 @@ const ManageMenuItems = () => {
   }, [searchQuery, selectedCategory, menuItems]);
 
   const handleEdit = (item: MenuItem) => {
-    setEditItem(item); // Open modal with item data
+    setEditItem(item);
   };
 
   const handleDelete = (id: string) => {
@@ -93,27 +106,27 @@ const ManageMenuItems = () => {
     setFilteredItems((prevItems) =>
       prevItems.map((item) => (item.id === updatedItem.id ? updatedItem : item))
     );
-    setEditItem(null); // Close modal
+    setEditItem(null);
   };
 
   const handleCloseModal = () => {
-    setEditItem(null); // Close modal
+    setEditItem(null);
   };
 
-  const categories = [
-    'All',
-    'Main Course',
-    'Appetizers',
-    'Desserts',
-    'Sides',
-    'Beverages',
+  // Dynamic categories for dropdown
+  const dynamicCategories = [
+    { _id: 'all', name: 'All' },
+    ...categories.map((cat) => ({ _id: cat._id, name: cat.name })),
   ];
+
+  // Map category _id to name for ResturentItemCard
+  const categoryMap = new Map<string, string>(categories.map(cat => [cat._id, cat.name]));
 
   if (loading) {
     return (
       <div className="p-4">
         <ResturentTitle text="All Menu Items" />
-        <div className="text-center">Loading...</div>
+        <div className="text-center text-gray-600 dark:text-gray-300">Loading...</div>
       </div>
     );
   }
@@ -130,23 +143,39 @@ const ManageMenuItems = () => {
   return (
     <>
       <div className="p-4">
-        <ResturentTitle text="Menu Items Management " />
+        <ResturentTitle text="Menu Items Management" />
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <input
-            type="text"
-            placeholder="Search by name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full sm:w-1/2 p-2 border rounded dark:bg-gray-700 dark:text-white"
-          />
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              placeholder="Search by name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-full border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+            <svg
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="w-full sm:w-1/4 p-2 border rounded dark:bg-gray-700 dark:text-white"
+            className="w-full sm:w-40 px-4 py-2 rounded-full border border-gray-300 dark:border-gray-500 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-500"
           >
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
+            {dynamicCategories.map((category) => (
+              <option key={category._id} value={category._id}>
+                {category.name}
               </option>
             ))}
           </select>
@@ -159,12 +188,13 @@ const ManageMenuItems = () => {
               key={item.id}
               data={item}
               restaurantId={restaurantId || ''}
+              categoryName={categoryMap.get(item.category) || `Category ${item.category}`}
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
           ))
         ) : (
-          <div className="col-span-full text-center text-gray-600">
+          <div className="col-span-full text-center text-gray-600 dark:text-gray-300">
             No menu items found.
           </div>
         )}

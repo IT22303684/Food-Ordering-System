@@ -643,6 +643,17 @@ function SignUp() {
               Sign In
             </span>
           </h1>
+
+           {/* Sign In Link */}
+           <h1 className="mt-[12px] flex items-center justify-center font-PlusSans text-sm leading-6 text-[#646464]">
+            If you want join us?{" "}
+            <span
+              className="ml-2.5 cursor-pointer font-semibold text-orange-600 hover:text-orange-700 hover:underline"
+              onClick={() => navigate("/resturent-signup")}
+            >
+              Join As Resturent
+            </span>
+          </h1>
         </div>
 
         {/* Footer */}

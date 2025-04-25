@@ -49,7 +49,7 @@ const menuItems: MenuItem[] = [
     subItems: [
       { path: "/resturent-dashboard/menu-management/all", title: "All Menu Item" },
       { path: "/resturent-dashboard/menu-management/manage", title: "Manage Menu Item" },
-      { path: "/resturent-dashboard/menu-management/add", title: "Add New Item" },
+      { path: "/resturent-dashboard/menu-management/add", title: "Add New Menu Item" },
     ],
   },
   {
@@ -57,7 +57,6 @@ const menuItems: MenuItem[] = [
     title: "Menu Category Management",
     icon: <MdOutlineRestaurantMenu  />,
     subItems: [
-      { path: "/resturent-dashboard/category/all", title: "All Category" },
       { path: "/resturent-dashboard/category/manage", title: "Manage Category" },
       { path: "/resturent-dashboard/category/add", title: "Add New Category" },
     ],
