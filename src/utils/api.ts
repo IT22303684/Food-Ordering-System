@@ -688,4 +688,128 @@ export const deleteMenuItem = async (restaurantId: string, menuItemId: string) =
   }
 };
 
+//--------------------------- Category APIs -------------------
+
+interface CategoryData {
+  name: string;
+  description?: string;
+}
+
+// Get all categories for a restaurant
+export const getCategories = async (restaurantId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch categories");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch categories error:", error);
+    throw error;
+  }
+};
+
+// Add a new category
+export const addCategory = async (restaurantId: string, data: CategoryData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to add category");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Add category error:", error);
+    throw error;
+  }
+};
+
+// Update an existing category
+export const updateCategory = async (
+  restaurantId: string,
+  categoryId: string,
+  data: Partial<CategoryData>
+) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories/${categoryId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update category");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update category error:", error);
+    throw error;
+  }
+};
+
+// Delete a category
+export const deleteCategory = async (restaurantId: string, categoryId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories/${categoryId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete category");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Delete category error:", error);
+    throw error;
+  }
+};
 

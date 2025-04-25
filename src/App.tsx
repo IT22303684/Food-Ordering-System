@@ -63,10 +63,14 @@ import CancelledOrder from "./pages/restaurants/CanceledOrder";
 import ManageMenuItems from "./pages/restaurants/ManageMenuItems";
 import AddNewItem from "./pages/restaurants/AddNewItem";
 import AllMenuItems from "./pages/restaurants/AllMenuItems";
+import AddCategories from "./pages/restaurants/AddCategories";
+import CategoryManagement from "./pages/restaurants/CategoryManagement";
+
 import FoodHomePage from "./pages/FoodHomePage";
 import Restaurant from "./pages/Restaurant";
 import ResturentProfile from "./pages/restaurants/ResturentProfile";
 import MobileBottomNav from "./components/UI/MobileBottomNav";
+
 
 const ResturentRoutes = () => {
   return (
@@ -89,8 +93,13 @@ const ResturentRoutes = () => {
           <Route path="all" element={<AllMenuItems />} />
           <Route path="manage" element={<ManageMenuItems />} />
           <Route path="add" element={<AddNewItem />} />
-          
         </Route>
+        {/* category-related routes grouped under /menu-management */}
+        <Route path="category">
+          <Route path="all" element={<AllMenuItems />} />
+          <Route path="manage" element={<CategoryManagement />} />
+          <Route path="add" element={<AddCategories />} />
+        </Route> 
         {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>
