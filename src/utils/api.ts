@@ -888,3 +888,492 @@ export const deleteCategory = async (restaurantId: string, categoryId: string) =
   }
 };
 
+//--------------------------- Cart APIs -------------------
+
+interface CartItem {
+  _id?: string;
+  menuItemId: string;
+  restaurantId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  mainImage?: string;
+  thumbnailImage?: string;
+}
+
+// Get cart
+export const getCart = async (cartId: string) => {
+  try {
+    const response = await fetch(`${BASE_URL}/carts/${cartId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch cart");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Get cart error:", error);
+    throw error;
+  }
+};
+
+// Add item to cart
+export const addToCart = async (cartId: string, item: CartItem) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const requestBody = {
+      menuItemId: item.menuItemId,
+      restaurantId: item.restaurantId,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      mainImage: item.mainImage
+        ? item.mainImage
+        : "https://via.placeholder.com/500",
+      thumbnailImage: item.thumbnailImage
+        ? item.thumbnailImage
+        : "https://via.placeholder.com/200",
+    };
+
+    console.log("Sending cart request:", {
+      url: `${BASE_URL}/carts/${cartId}/items`,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token.substring(0, 10) + "...",
+      },
+      body: requestBody,
+    });
+
+    const response = await fetch(`${BASE_URL}/carts/${cartId}/items`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const responseText = await response.text();
+    console.log("Raw response:", responseText);
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = { message: responseText };
+    }
+
+    if (!response.ok) {
+      console.error("Cart API error:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: data,
+        requestBody: requestBody,
+      });
+      throw new Error(data.message || "Failed to add item to cart");
+    }
+
+    console.log("Cart API success:", data);
+    return data;
+  } catch (error) {
+    console.error("Add to cart error:", error);
+    throw error;
+  }
+};
+
+// Update cart item
+export const updateCartItem = async (
+  userId: string,
+  menuItemId: string,
+  quantity: number
+) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    // First, get the cart to verify the item exists
+    const cartResponse = await fetch(`${BASE_URL}/carts/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!cartResponse.ok) {
+      throw new Error("Cart not found");
+    }
+
+    const cart = await cartResponse.json();
+    const itemExists = cart.items.some(
+      (item: CartItem) => item.menuItemId === menuItemId
+    );
+
+    if (!itemExists) {
+      throw new Error("Item not found in cart");
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/carts/${userId}/items/${menuItemId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ quantity }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update cart item");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update cart item error:", error);
+    throw error;
+  }
+};
+
+// Remove cart item
+export const removeCartItem = async (userId: string, menuItemId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/carts/${userId}/items/${menuItemId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to remove cart item");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Remove cart item error:", error);
+    throw error;
+  }
+};
+
+// Clear cart
+export const clearCart = async (userId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/carts/${userId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to clear cart");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Clear cart error:", error);
+    throw error;
+  }
+};
+
+// Create a new cart
+export const createCart = async (userId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    console.log("Creating cart for user:", userId);
+
+    const response = await fetch(`${BASE_URL}/carts`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    // Log the raw response for debugging
+    const responseText = await response.text();
+    console.log("Raw create cart response:", responseText);
+
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = { message: responseText };
+    }
+
+    if (!response.ok) {
+      console.error("Create cart error:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: data,
+      });
+      throw new Error(data.message || "Failed to create cart");
+    }
+
+    console.log("Cart created successfully:", data);
+    return data;
+  } catch (error) {
+    console.error("Create cart error:", error);
+    throw error;
+  }
+};
+
+interface OrderItem {
+  menuItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface DeliveryAddress {
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  country: string;
+}
+
+interface CreateOrderData {
+  userId: string;
+  restaurantId: string;
+  items: OrderItem[];
+  deliveryAddress: DeliveryAddress;
+  paymentMethod: "CREDIT_CARD" | "CASH" | "ONLINE";
+}
+
+export const createOrder = async (orderData: CreateOrderData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/orders`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to create order");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Create order error:", error);
+    throw error;
+  }
+};
+
+interface OrderStatus {
+  status:
+    | "PENDING"
+    | "CONFIRMED"
+    | "PREPARING"
+    | "READY_FOR_PICKUP"
+    | "ON_THE_WAY"
+    | "DELIVERED"
+    | "CANCELLED";
+}
+
+// Get orders by user ID
+export const getOrdersByUserId = async (userId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/orders/user/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch orders");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Get orders error:", error);
+    throw error;
+  }
+};
+
+// Get order by ID
+export const getOrderById = async (orderId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/orders/${orderId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch order");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Get order error:", error);
+    throw error;
+  }
+};
+
+// Update order status
+export const updateOrderStatus = async (
+  orderId: string,
+  status: OrderStatus["status"]
+) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/orders/${orderId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update order status");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update order status error:", error);
+    throw error;
+  }
+};
+
+// Delete order by ID
+export const deleteOrder = async (orderId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/orders/${orderId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete order");
+    }
+
+    // For 204 No Content, we don't need to parse JSON
+    if (response.status === 204) {
+      return null;
+    }
+
+    // For other success statuses, parse JSON
+    return await response.json();
+  } catch (error) {
+    console.error("Delete order error:", error);
+    throw error;
+  }
+};
+
+// Cancel order by ID
+export const cancelOrder = async (orderId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/orders/${orderId}/cancel`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: "CANCELLED" }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage = "Failed to cancel order";
+
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        // If response is not JSON, use the raw text
+        console.log("Error parsing JSON:", e);
+        errorMessage = errorText || errorMessage;
+      }
+
+      throw new Error(errorMessage);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Cancel order error:", error);
+    throw error;
+  }
+};
+
+
