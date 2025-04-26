@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
-import { getRestaurantByUserId, updateRestaurantAvailability } from "@/utils/api";
+import { getRestaurantById, updateRestaurantAvailability } from "@/utils/api";
 
 interface HeaderProps {
   toggleDarkMode: () => void;
@@ -26,34 +26,51 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
-        const response = await getRestaurantByUserId();
-        setRestaurantLogo(response.restaurant.logo || null);
-        setAvailability(response.restaurant.availability ?? true);
+        if (!user || !user.id) {
+          throw new Error("User not authenticated or missing ID");
+        }
+        const response = await getRestaurantById(user.id);
+        if (!response) {
+          throw new Error("Restaurant data not found in response");
+        }
+        setRestaurantLogo(response.logo || null);
+        setAvailability(response.availability ?? true);
       } catch (error: any) {
         console.error('Failed to fetch restaurant data:', error);
         toast.error(error.message || 'Failed to fetch restaurant data');
         setRestaurantLogo(null);
+        setAvailability(true); // Fallback to default availability
       }
     };
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       fetchRestaurant();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
-  // Handle availability toggle
+  // Handle availability toggle with optimistic update
   const handleToggleAvailability = async () => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user) {
       toast.error("You must be logged in to update availability.");
       return;
     }
 
     setIsToggling(true);
+    // Optimistically update the UI
+    const previousAvailability = availability;
+    const newAvailability = !availability;
+    setAvailability(newAvailability);
+
     try {
-      const newAvailability = !availability;
       const response = await updateRestaurantAvailability(newAvailability);
-      setAvailability(response.restaurant.availability);
+      if (!response) {
+        throw new Error("Restaurant data not found in response");
+      }
+      // Confirm server state (optional, since UI is already updated)
+      setAvailability(response.availability);
       toast.success(`Restaurant is now ${newAvailability ? 'available' : 'unavailable'}.`);
     } catch (error: any) {
+      // Revert to previous state on error
+      setAvailability(previousAvailability);
       console.error('Toggle availability error:', error);
       toast.error(error.message || 'Failed to update availability');
     } finally {
@@ -113,7 +130,7 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
             </div>
             <div className="flex items-center space-x-4">
               {/* Availability Toggle Button */}
-              {isAuthenticated && (
+              {isAuthenticated && user && (
                 <button
                   onClick={handleToggleAvailability}
                   disabled={isToggling}
@@ -139,7 +156,7 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
                 {darkMode ? <FaSun /> : <FaMoon className="text-gray-500" />}
               </button>
               {/* User Dropdown */}
-              {isAuthenticated && (
+              {isAuthenticated && user && (
                 <div className="relative">
                   <button
                     onClick={toggleDropdown}
@@ -149,7 +166,7 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
                   >
                     <FiUser className="text-xl" />
                     <span className="hidden sm:inline text-sm font-medium dark:text-white">
-                      {user?.email || "User"}
+                      {user.email || "User"}
                     </span>
                   </button>
                   {isDropdownOpen && (
