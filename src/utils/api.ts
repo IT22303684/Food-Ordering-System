@@ -1,5 +1,7 @@
 const BASE_URL = "http://localhost:3010/api";
 
+//------------------------ Auth APIs ----------------------
+
 interface FormData {
   email: string;
   password: string;
@@ -13,6 +15,14 @@ interface FormData {
     zipCode: string;
     country: string;
   };
+}
+interface UserStatusData {
+  isActive?: boolean;
+  isVerified?: boolean;
+}
+
+interface UserRoleData {
+  role: "CUSTOMER" | "RESTAURANT" | "DELIVERY" | "ADMIN";
 }
 
 export const login = async (email: string, password: string) => {
@@ -101,6 +111,175 @@ export const updateProfile = async (userData: Partial<FormData>) => {
   }
 };
 
+// get all users (for admin)
+export const getAllUsers = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/auth/users`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch users");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch all users error:", error);
+    throw error;
+  }
+};
+// get user by id (for admin)
+export const getUserById = async (userId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/auth/users/${userId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch user");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch user by ID error:", error);
+    throw error;
+  }
+};
+// update user (for admin)
+export const updateUser = async (
+  userId: string,
+  userData: Partial<FormData & { password?: string; confirmPassword?: string }>
+) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/auth/users/${userId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update user");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update user error:", error);
+    throw error;
+  }
+};
+// delete user (for admin)
+export const deleteUser = async (userId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/auth/users/${userId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete user");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Delete user error:", error);
+    throw error;
+  }
+};
+// get update user status (for admin)
+export const updateUserStatus = async (userId: string, statusData: UserStatusData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/auth/users/${userId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(statusData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update user status");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update user status error:", error);
+    throw error;
+  }
+};
+// update user role (for admin)
+export const updateUserRole = async (userId: string, roleData: UserRoleData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/auth/users/${userId}/role`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(roleData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update user role");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update user role error:", error);
+    throw error;
+  }
+};
+
 //------------------------ Restaurant APIs ----------------------
 
 interface RestaurantFormData {
@@ -118,37 +297,16 @@ interface RestaurantFormData {
   zipCode: string;
   country: string;
   email: string;
-  password?: string; // Optional for updates
-  agreeTerms?: boolean; // Optional for updates
+  password?: string; 
+  agreeTerms?: boolean;
   businessLicense: File | null;
   foodSafetyCert: File | null;
   exteriorPhoto: File | null;
   logo: File | null;
 }
 
-interface RestaurantUpdateData {
-  restaurantName?: string;
-  contactPerson?: string;
-  phoneNumber?: string;
-  businessType?: string;
-  cuisineType?: string;
-  operatingHours?: string;
-  deliveryRadius?: string;
-  taxId?: string;
-  streetAddress?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  country?: string;
-  email?: string;
-  password?: string;
-  agreeTerms?: boolean;
-}
-
 // Register restaurant
-export const registerRestaurant = async (
-  restaurantData: RestaurantFormData
-) => {
+export const registerRestaurant = async (restaurantData: RestaurantFormData) => {
   try {
     const formData = new FormData();
     formData.append("restaurantName", restaurantData.restaurantName);
@@ -204,54 +362,48 @@ export const registerRestaurant = async (
 // Fetch restaurant by userId
 export const getRestaurantByUserId = async () => {
   try {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (!token) {
-      throw new Error("No token found. Please log in.");
+      throw new Error('No token found. Please log in.');
     }
 
     const response = await fetch(`${BASE_URL}/restaurants`, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch restaurant");
+      throw new Error(errorData.message || 'Failed to fetch restaurant');
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Fetch restaurant by userId error:", error);
+    console.error('Fetch restaurant by userId error:', error);
     throw error;
   }
 };
 
 // Update restaurant
-export const updateRestaurant = async (
-  restaurantId: string,
-  data: RestaurantUpdateData,
-  files?: { [key: string]: File | null }
-) => {
+export const updateRestaurant = async (restaurantId: string, data: { [key: string]: any }, files?: { [key: string]: File | null }) => {
   try {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (!token) {
-      throw new Error("No token found. Please log in.");
+      throw new Error('No token found. Please log in.');
     }
 
     const formData = new FormData();
 
     // Append text fields
     Object.entries(data).forEach(([key, value]) => {
-      if (key === "address") {
+      if (key === 'address') {
         // Handle nested address object
-        Object.entries(value as { [key: string]: string }).forEach(
-          ([addrKey, addrValue]) => {
-            formData.append(`address[${addrKey}]`, addrValue);
-          }
-        );
+        Object.entries(value as { [key: string]: string }).forEach(([addrKey, addrValue]) => {
+          formData.append(`address[${addrKey}]`, addrValue);
+        });
       } else {
         formData.append(key, value as string);
       }
@@ -267,7 +419,7 @@ export const updateRestaurant = async (
     }
 
     const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}`, {
-      method: "PUT",
+      method: 'PUT',
       headers: {
         Authorization: `Bearer ${token}`,
         // Do NOT set Content-Type; fetch will set it automatically for multipart/form-data
@@ -277,12 +429,12 @@ export const updateRestaurant = async (
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to update restaurant");
+      throw new Error(errorData.message || 'Failed to update restaurant');
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Update restaurant error:", error);
+    console.error('Update restaurant error:', error);
     throw error;
   }
 };
@@ -290,24 +442,21 @@ export const updateRestaurant = async (
 // Get all resturents
 export const getAllRestaurants = async (page = 1, limit = 10) => {
   try {
-    const response = await fetch(
-      `${BASE_URL}/restaurants/all?page=${page}&limit=${limit}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await fetch(`${BASE_URL}/restaurants/all?page=${page}&limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch restaurants");
+      throw new Error(errorData.message || 'Failed to fetch restaurants');
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Fetch all restaurants error:", error);
+    console.error('Fetch all restaurants error:', error);
     throw error;
   }
 };
@@ -316,77 +465,425 @@ export const getAllRestaurants = async (page = 1, limit = 10) => {
 export const getRestaurantById = async (restaurantId: string) => {
   try {
     const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}`, {
-      method: "GET",
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(
-        errorData.message || "Failed to fetch restaurant details"
-      );
+      throw new Error(errorData.message || 'Failed to fetch restaurant details');
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Fetch restaurant details error:", error);
+    console.error('Fetch restaurant details error:', error);
     throw error;
   }
 };
 
-//--------------------------- Menu api's -------------------
-
-// get menu item by resturent id
-export const getMenuItemsByRestaurantId = async (restaurantId: string) => {
+// Delete a restaurant by ID
+export const deleteRestaurant = async (restaurantId: string) => {
   try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to delete restaurant');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Delete restaurant error:', error);
+    throw error;
+  }
+};
+
+// Update restaurant status
+export const updateRestaurantStatus = async (restaurantId: string, status: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update restaurant status');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Update restaurant status error:', error);
+    throw error;
+  }
+};
+
+//Update restaurant availability
+export const updateRestaurantAvailability = async (availability: boolean) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/availability`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ availability }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update restaurant availability');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Update restaurant availability error:', error);
+    throw error;
+  }
+}
+
+//--------------------------- Menu items api's -------------------
+
+// Get menu items by restaurant ID (public or authenticated)
+export const getMenuItemsByRestaurantId = async (restaurantId: string, isAuthenticated: boolean = false) => {
+  try {
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+    };
+
+    if (isAuthenticated) {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/menu-items`, {
+      method: 'GET',
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to fetch menu items');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Fetch menu items error:', error);
+    throw error;
+  }
+};
+
+// Fetch a specific menu item by ID
+export const getMenuItemById = async (restaurantId: string, menuItemId: string) => {
+  try {
+   
+
     const response = await fetch(
-      `http://localhost:3010/api/restaurants/${restaurantId}/menu-items`,
+      `${BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}`,
       {
-        method: "GET",
+        method: 'GET',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       }
     );
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch menu items");
+      throw new Error(errorData.message || 'Failed to fetch menu item');
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Fetch menu items error:", error);
+    console.error('Fetch menu item error:', error);
     throw error;
   }
 };
 
-//fetch a specific menu item by ID
-export const getMenuItemById = async (
+// Update a menu item
+export const updateMenuItem = async (
   restaurantId: string,
-  menuItemId: string
+  menuItemId: string,
+  data: Partial<{
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    isAvailable: boolean;
+  }>,
+  files?: { mainImage?: File; thumbnailImage?: File }
 ) => {
   try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const formData = new FormData();
+    // Append text fields
+    if (data.name) formData.append('name', data.name);
+    if (data.description) formData.append('description', data.description);
+    if (data.price !== undefined) formData.append('price', data.price.toString());
+    if (data.category) formData.append('category', data.category);
+    if (data.isAvailable !== undefined) formData.append('isAvailable', data.isAvailable.toString());
+
+    // Append files if provided
+    if (files?.mainImage) formData.append('mainImage', files.mainImage);
+    if (files?.thumbnailImage) formData.append('thumbnailImage', files.thumbnailImage);
+
     const response = await fetch(
-      `http://localhost:3010/api/restaurants/${restaurantId}/menu-items/${menuItemId}`,
+      `${BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}`,
       {
-        method: "GET",
+        method: 'PATCH',
         headers: {
-          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          // Do NOT set Content-Type; fetch sets it automatically for FormData
+        },
+        body: formData,
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update menu item');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Update menu item error:', error);
+    throw error;
+  }
+};
+
+// Delete a menu item
+export const deleteMenuItem = async (restaurantId: string, menuItemId: string) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
       }
     );
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || "Failed to fetch menu item");
+      throw new Error(errorData.message || 'Failed to delete menu item');
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Fetch menu item error:", error);
+    console.error('Delete menu item error:', error);
+    throw error;
+  }
+};
+
+// add menu item
+export const addMenuItem = async (
+  restaurantId: string,
+  data: {
+    name: string;
+    description: string;
+    price: number;
+    category: string;
+    isAvailable: boolean;
+  },
+  files?: {
+    mainImage?: File;
+    thumbnailImage?: File;
+  }
+) => {
+  const token = localStorage.getItem('token');
+  const formData = new FormData();
+  
+  // Append text fields
+  formData.append('name', data.name);
+  formData.append('description', data.description);
+  formData.append('price', data.price.toString());
+  formData.append('category', data.category);
+  formData.append('isAvailable', data.isAvailable.toString());
+
+  // Append files if provided
+  if (files?.mainImage) {
+    formData.append('mainImage', files.mainImage);
+  }
+  if (files?.thumbnailImage) {
+    formData.append('thumbnailImage', files.thumbnailImage);
+  }
+
+  const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/menu-items`, {
+    method: 'POST',
+    headers: {
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      // Do not set Content-Type for FormData; browser sets it with boundary
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to add menu item');
+  }
+
+  return response.json();
+};
+
+//--------------------------- Category APIs -------------------
+
+interface CategoryData {
+  name: string;
+  description?: string;
+}
+
+// Get all categories for a restaurant
+export const getCategories = async (restaurantId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch categories");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch categories error:", error);
+    throw error;
+  }
+};
+
+// Add a new category
+export const addCategory = async (restaurantId: string, data: CategoryData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to add category");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Add category error:", error);
+    throw error;
+  }
+};
+
+// Update an existing category
+export const updateCategory = async (
+  restaurantId: string,
+  categoryId: string,
+  data: Partial<CategoryData>
+) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories/${categoryId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update category");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update category error:", error);
+    throw error;
+  }
+};
+
+// Delete a category
+export const deleteCategory = async (restaurantId: string, categoryId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories/${categoryId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete category");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Delete category error:", error);
     throw error;
   }
 };
@@ -878,3 +1375,5 @@ export const cancelOrder = async (orderId: string) => {
     throw error;
   }
 };
+
+

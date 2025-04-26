@@ -1,8 +1,9 @@
-
-
 import React, { useState } from "react";
+import { updateRestaurantStatus } from "../../utils/api";
+import ConfirmationModal from "../UI/ConfirmationModal";
 
 export interface Restaurant {
+  _id: string;
   restaurantName: string;
   contactPerson: string;
   phoneNumber: string;
@@ -11,17 +12,19 @@ export interface Restaurant {
   operatingHours: string;
   deliveryRadius: string;
   taxId: string;
-  streetAddress: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  address: {
+    streetAddress: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   email: string;
-  businessLicense?: File | null;
-  foodSafetyCert?: File | null;
-  exteriorPhoto?: File | null;
-  logo?: File | null;
-  status?: string; // Added status field
+  businessLicense?: string | null;
+  foodSafetyCert?: string | null;
+  exteriorPhoto?: string | null;
+  logo?: string | null;
+  status?: string;
 }
 
 interface AdminResturentTableProps {
@@ -30,36 +33,81 @@ interface AdminResturentTableProps {
 }
 
 const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ headers, data }) => {
-  const [restaurants, setRestaurants] = useState<Restaurant[]>(data);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>(
+    data.map((restaurant) => ({
+      ...restaurant,
+      status: restaurant.status ? restaurant.status.trim().toLowerCase() : "pending",
+    }))
+  );
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [error, setError] = useState<string | null>(null);
+  const [modal, setModal] = useState<{
+    isOpen: boolean;
+    action: "approve" | "reject" | null;
+    restaurantId: string | null;
+    restaurantName: string | null;
+  }>({
+    isOpen: false,
+    action: null,
+    restaurantId: null,
+    restaurantName: null,
+  });
 
   // Handle approve action
-  const handleApprove = (restaurantName: string) => {
-    setRestaurants((prevRestaurants) =>
-      prevRestaurants.map((restaurant) =>
-        restaurant.restaurantName === restaurantName
-          ? { ...restaurant, status: "Approved" }
-          : restaurant
-      )
-    );
+  const handleApprove = async (restaurantId: string, restaurantName: string) => {
+    setModal({
+      isOpen: true,
+      action: "approve",
+      restaurantId,
+      restaurantName,
+    });
   };
 
-  // Handle reject action with confirmation
-  const handleReject = (restaurantName: string) => {
-    if (window.confirm(`Are you sure you want to reject ${restaurantName}?`)) {
-      setRestaurants((prevRestaurants) =>
-        prevRestaurants.map((restaurant) =>
-          restaurant.restaurantName === restaurantName
-            ? { ...restaurant, status: "Rejected" }
+  // Handle reject action
+  const handleReject = async (restaurantId: string, restaurantName: string) => {
+    setModal({
+      isOpen: true,
+      action: "reject",
+      restaurantId,
+      restaurantName,
+    });
+  };
+
+  // Confirm modal action
+  const handleConfirm = async () => {
+    if (!modal.restaurantId || !modal.restaurantName || !modal.action) return;
+
+    try {
+      const status = modal.action === "approve" ? "approved" : "rejected";
+      await updateRestaurantStatus(modal.restaurantId, status);
+      setRestaurants((prev) =>
+        prev.map((restaurant) =>
+          restaurant._id === modal.restaurantId
+            ? { ...restaurant, status: status.charAt(0).toUpperCase() + status.slice(1) }
             : restaurant
         )
       );
+      setError(null);
+    } catch (err: any) {
+      setError(`Failed to ${modal.action} ${modal.restaurantName}: ${err.message}`);
+    } finally {
+      setModal({ isOpen: false, action: null, restaurantId: null, restaurantName: null });
     }
   };
 
-  // Filter restaurants based on search term
-  const filteredRestaurants = restaurants.filter((restaurant) =>
+  // Close modal
+  const handleCloseModal = () => {
+    setModal({ isOpen: false, action: null, restaurantId: null, restaurantName: null });
+  };
+
+  // Filter restaurants to only show Pending status
+  const filteredRestaurants = restaurants.filter(
+    (restaurant) => restaurant.status?.toLowerCase() === "pending"
+  );
+
+  // Apply search filter
+  const searchedRestaurants = filteredRestaurants.filter((restaurant) =>
     [
       restaurant.restaurantName,
       restaurant.contactPerson,
@@ -69,7 +117,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
   );
 
   // Sort restaurants by restaurantName
-  const sortedRestaurants = [...filteredRestaurants].sort((a, b) => {
+  const sortedRestaurants = [...searchedRestaurants].sort((a, b) => {
     const nameA = a.restaurantName.toLowerCase();
     const nameB = b.restaurantName.toLowerCase();
     return sortOrder === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
@@ -83,12 +131,12 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
   // Get status color styles
   const getStatusStyles = (status: string) => {
     const baseStyles = "px-2 py-1 text-xs font-semibold rounded-lg";
-    switch (status) {
-      case "Approved":
+    switch (status.toLowerCase()) {
+      case "approved":
         return `${baseStyles} bg-green-100 text-green-600 dark:bg-green-700 dark:text-green-200`;
-      case "Rejected":
+      case "rejected":
         return `${baseStyles} bg-red-100 text-red-600 dark:bg-red-700 dark:text-red-200`;
-      case "Pending":
+      case "pending":
       default:
         return `${baseStyles} bg-yellow-100 text-yellow-600 dark:bg-yellow-700 dark:text-yellow-200`;
     }
@@ -113,8 +161,22 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
         </button>
       </div>
 
+      {/* Error Message */}
+      {error && <p className="p-5 text-center text-red-600">{error}</p>}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={modal.isOpen}
+        onClose={handleCloseModal}
+        onConfirm={handleConfirm}
+        title={modal.action === "approve" ? "Approve Restaurant" : "Reject Restaurant"}
+        message={`Are you sure you want to ${modal.action} ${modal.restaurantName}?`}
+        confirmText={modal.action === "approve" ? "Approve" : "Reject"}
+        cancelText="Cancel"
+      />
+
       {/* Desktop Table View with Horizontal Scroll */}
-      <div className="hidden lg:block p-5 w-full text-sm rounded-2xl overflow-x-auto bg-gray-100 dark:bg-gray-600">
+      <div className="hidden lg:block p-5 w-full text-sm overflow-x-auto bg-white dark:bg-gray-700">
         <table className="min-w-[1200px] w-full">
           <thead className="bg-gray-200 border-gray-200 dark:bg-gray-700 dark:border-gray-500">
             <tr>
@@ -131,7 +193,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
           <tbody>
             {sortedRestaurants.map((restaurant, index) => (
               <tr
-                key={restaurant.restaurantName}
+                key={restaurant._id}
                 className={`border-b border-gray-200 dark:border-gray-500 ${
                   index % 2 === 0
                     ? "bg-gray-50 dark:bg-gray-600"
@@ -161,19 +223,21 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 </td>
                 <td className="py-4 px-6 text-gray-800 dark:text-white">{restaurant.taxId}</td>
                 <td className="py-4 px-6 text-gray-800 dark:text-white">
-                  {restaurant.streetAddress}
+                  {restaurant.address.streetAddress}
                 </td>
-                <td className="py-4 px-6 text-gray-800 dark:text-white">{restaurant.city}</td>
-                <td className="py-4 px-6 text-gray-800 dark:text-white">{restaurant.state}</td>
+                <td className="py-4 px-6 text-gray-800 dark:text-white">{restaurant.address.city}</td>
+                <td className="py-4 px-6 text-gray-800 dark:text-white">{restaurant.address.state}</td>
                 <td className="py-4 px-6 text-gray-800 dark:text-white">
-                  {restaurant.zipCode}
+                  {restaurant.address.zipCode}
                 </td>
-                <td className="py-4 px-6 text-gray-800 dark:text-white">{restaurant.country}</td>
+                <td className="py-4 px-6 text-gray-800 dark:text-white">
+                  {restaurant.address.country}
+                </td>
                 <td className="py-4 px-6 text-gray-800 dark:text-white">{restaurant.email}</td>
                 <td className="py-4 px-6 text-gray-800 dark:text-white">
                   {restaurant.businessLicense ? (
                     <a
-                      href={URL.createObjectURL(restaurant.businessLicense)}
+                      href={restaurant.businessLicense}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -187,7 +251,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 <td className="py-4 px-6 text-gray-800 dark:text-white">
                   {restaurant.foodSafetyCert ? (
                     <a
-                      href={URL.createObjectURL(restaurant.foodSafetyCert)}
+                      href={restaurant.foodSafetyCert}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -201,7 +265,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 <td className="py-4 px-6 text-gray-800 dark:text-white">
                   {restaurant.exteriorPhoto ? (
                     <a
-                      href={URL.createObjectURL(restaurant.exteriorPhoto)}
+                      href={restaurant.exteriorPhoto}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -215,7 +279,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 <td className="py-4 px-6 text-gray-800 dark:text-white">
                   {restaurant.logo ? (
                     <a
-                      href={URL.createObjectURL(restaurant.logo)}
+                      href={restaurant.logo}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -233,10 +297,10 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 </td>
                 <td className="py-4 px-6 flex space-x-2">
                   <button
-                    onClick={() => handleApprove(restaurant.restaurantName)}
-                    disabled={restaurant.status !== "Pending"}
+                    onClick={() => handleApprove(restaurant._id, restaurant.restaurantName)}
+                    disabled={restaurant.status?.toLowerCase() !== "pending"}
                     className={`px-3 py-1 rounded-lg text-white transition-colors ${
-                      restaurant.status !== "Pending"
+                      restaurant.status?.toLowerCase() !== "pending"
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-green-500 hover:bg-green-600"
                     }`}
@@ -244,10 +308,10 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                     Approve
                   </button>
                   <button
-                    onClick={() => handleReject(restaurant.restaurantName)}
-                    disabled={restaurant.status !== "Pending"}
+                    onClick={() => handleReject(restaurant._id, restaurant.restaurantName)}
+                    disabled={restaurant.status?.toLowerCase() !== "pending"}
                     className={`px-3 py-1 rounded-lg text-white transition-colors ${
-                      restaurant.status !== "Pending"
+                      restaurant.status?.toLowerCase() !== "pending"
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-red-500 hover:bg-red-600"
                     }`}
@@ -265,8 +329,8 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
       <div className="lg:hidden p-5 space-y-4 overflow-y-scroll h-full">
         {sortedRestaurants.map((restaurant) => (
           <div
-            key={restaurant.restaurantName}
-            className="border rounded-xl p-4 bg-gray-100 shadow-md hover:shadow-lg transition-shadow border-gray-200 dark:bg-gray-600 dark:border-gray-500"
+            key={restaurant._id}
+            className="border rounded-md p-4 bg-white shadow-md hover:shadow-lg transition-shadow border-gray-200 dark:bg-gray-600 dark:border-gray-500"
           >
             <div className="space-y-2">
               <div className="flex justify-between items-center py-1">
@@ -318,27 +382,27 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
               <div className="flex justify-between items-center py-1">
                 <span className="font-medium text-gray-800 dark:text-white">Street Address:</span>
                 <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {restaurant.streetAddress}
+                  {restaurant.address.streetAddress}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="font-medium text-gray-800 dark:text-white">City:</span>
-                <span className="text-sm text-gray-600 dark:text-gray-300">{restaurant.city}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-300">{restaurant.address.city}</span>
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="font-medium text-gray-800 dark:text-white">State:</span>
-                <span className="text-sm text-gray-600 dark:text-gray-300">{restaurant.state}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-300">{restaurant.address.state}</span>
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="font-medium text-gray-800 dark:text-white">Zip Code:</span>
                 <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {restaurant.zipCode}
+                  {restaurant.address.zipCode}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="font-medium text-gray-800 dark:text-white">Country:</span>
                 <span className="text-sm text-gray-600 dark:text-gray-300">
-                  {restaurant.country}
+                  {restaurant.address.country}
                 </span>
               </div>
               <div className="flex justify-between items-center py-1">
@@ -350,7 +414,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   {restaurant.businessLicense ? (
                     <a
-                      href={URL.createObjectURL(restaurant.businessLicense)}
+                      href={restaurant.businessLicense}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -369,7 +433,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   {restaurant.foodSafetyCert ? (
                     <a
-                      href={URL.createObjectURL(restaurant.foodSafetyCert)}
+                      href={restaurant.foodSafetyCert}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -386,7 +450,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   {restaurant.exteriorPhoto ? (
                     <a
-                      href={URL.createObjectURL(restaurant.exteriorPhoto)}
+                      href={restaurant.exteriorPhoto}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -403,7 +467,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 <span className="text-sm text-gray-600 dark:text-gray-300">
                   {restaurant.logo ? (
                     <a
-                      href={URL.createObjectURL(restaurant.logo)}
+                      href={restaurant.logo}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 underline"
@@ -425,10 +489,10 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
             {/* Actions */}
             <div className="flex space-x-2 mt-4">
               <button
-                onClick={() => handleApprove(restaurant.restaurantName)}
-                disabled={restaurant.status !== "Pending"}
+                onClick={() => handleApprove(restaurant._id, restaurant.restaurantName)}
+                disabled={restaurant.status?.toLowerCase() !== "pending"}
                 className={`px-3 py-1 rounded-lg text-white transition-colors ${
-                  restaurant.status !== "Pending"
+                  restaurant.status?.toLowerCase() !== "pending"
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-green-500 hover:bg-green-600"
                 }`}
@@ -436,10 +500,10 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
                 Approve
               </button>
               <button
-                onClick={() => handleReject(restaurant.restaurantName)}
-                disabled={restaurant.status !== "Pending"}
+                onClick={() => handleReject(restaurant._id, restaurant.restaurantName)}
+                disabled={restaurant.status?.toLowerCase() !== "pending"}
                 className={`px-3 py-1 rounded-lg text-white transition-colors ${
-                  restaurant.status !== "Pending"
+                  restaurant.status?.toLowerCase() !== "pending"
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-red-500 hover:bg-red-600"
                 }`}
@@ -454,7 +518,7 @@ const AdminResturentRequestTable: React.FC<AdminResturentTableProps> = ({ header
       {/* No Results Message */}
       {sortedRestaurants.length === 0 && (
         <div className="p-5 text-center text-gray-600 dark:text-gray-300">
-          No restaurants found.
+          No pending restaurants found.
         </div>
       )}
     </>

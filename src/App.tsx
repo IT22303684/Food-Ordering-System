@@ -16,12 +16,17 @@ import Order from "./pages/Order";
 import Cart from "./pages/Cart";
 import ResturentRegister from "./pages/ResturentRegister";
 import Profile from "./pages/Profile";
+import TermsAndConditions from "./pages/TermsAndConditions";
 
 //-------------- admin--------------------------------------
 import AdminLayout from "./pages/admin/AdminLayout";
 import AllResturent from "./pages/admin/AllResturent";
 import RequestResturent from "./pages/admin/RequestResturent";
 import AddResturent from "./pages/admin/AddResturent";
+import AllUsers from "./pages/admin/AllUsers";
+import UserPermissions from "./pages/admin/UserPermissions";
+import UserSetting from "./pages/admin/UserSetting";
+import AddUser from "./pages/admin/AddUser";
 
 const AdminRoutes = () => {
   return (
@@ -37,6 +42,14 @@ const AdminRoutes = () => {
           <Route path="request" element={<RequestResturent />} />
           <Route path="add" element={<AddResturent />} />
         </Route>
+        {/* user-related routes grouped under /orders */}
+        <Route path="user-management">
+          <Route path="all" element={<AllUsers />} />
+          <Route path="roles" element={<UserPermissions />} />
+          <Route path="add" element={<AddUser />} /> 
+          <Route path="settings" element={<UserSetting />} />
+        </Route>
+
         {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>
@@ -51,8 +64,11 @@ import PreparingOrder from "./pages/restaurants/PreparingOrder";
 import ReadyOrder from "./pages/restaurants/ReadyOrder";
 import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
-import AllItem from "./pages/restaurants/AllItem";
-import AddNewItem from "./pages/restaurants/AddNewItem";
+import ManageMenuItems from "./pages/restaurants/ManageMenuItems";
+import AddNewMenuItem from "./pages/restaurants/AddNewMenuItem";
+import AllMenuItems from "./pages/restaurants/AllMenuItems";
+import AddCategories from "./pages/restaurants/AddCategories";
+import CategoryManagement from "./pages/restaurants/CategoryManagement";
 
 import FoodHomePage from "./pages/FoodHomePage";
 import Restaurant from "./pages/Restaurant";
@@ -60,6 +76,7 @@ import ResturentProfile from "./pages/restaurants/ResturentProfile";
 import MobileBottomNav from "./components/UI/MobileBottomNav";
 import Checkout from "./pages/Checkout";
 import OrdersList from "./pages/OrdersList";
+
 const ResturentRoutes = () => {
   return (
     <Routes>
@@ -78,9 +95,15 @@ const ResturentRoutes = () => {
         </Route>
         {/* menu-related routes grouped under /menu-management */}
         <Route path="menu-management">
-          <Route path="all" element={<AllItem />} />
-          <Route path="add" element={<AddNewItem />} />
+          <Route path="all" element={<AllMenuItems />} />
+          <Route path="manage" element={<ManageMenuItems />} />
+          <Route path="add" element={<AddNewMenuItem />} />
         </Route>
+        {/* category-related routes grouped under /menu-management */}
+        <Route path="category">
+          <Route path="manage" element={<CategoryManagement />} />
+          <Route path="add" element={<AddCategories />} />
+        </Route> 
         {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>
@@ -121,7 +144,8 @@ function App() {
               <Route path="/order/:orderId" element={<Order />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
-              <Route path="/account" element={<Profile />} />
+              <Route path="/account" element={<Profile />} /> 
+              <Route path="/terms-condition" element={<TermsAndConditions />} />
               <Route
                 path="/restaurant/:restaurantId/menu"
                 element={<RestaurantMenu />}

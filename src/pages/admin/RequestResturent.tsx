@@ -1,8 +1,10 @@
-
-import AdminResturentRequestTable from "../../components/UI/AdminResturentRequestTable"; // Use the correct table
-import ResturentTitle from "../../components/UI/ResturentTitle"; // Assuming this is correct
+import { useEffect, useState } from "react";
+import AdminResturentRequestTable from "../../components/admin/AdminResturentRequestTable";
+import ResturentTitle from "../../components/UI/ResturentTitle";
+import { getAllRestaurants } from "../../utils/api";
 
 export interface Restaurant {
+  _id: string;
   restaurantName: string;
   contactPerson: string;
   phoneNumber: string;
@@ -11,20 +13,21 @@ export interface Restaurant {
   operatingHours: string;
   deliveryRadius: string;
   taxId: string;
-  streetAddress: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  address: {
+    streetAddress: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   email: string;
-  businessLicense?: File | null;
-  foodSafetyCert?: File | null;
-  exteriorPhoto?: File | null;
-  logo?: File | null;
+  businessLicense?: string | null;
+  foodSafetyCert?: string | null;
+  exteriorPhoto?: string | null;
+  logo?: string | null;
   status?: string;
 }
 
-// Define table headers for restaurant details including documents and status
 const tableHeaders = [
   "Restaurant Name",
   "Contact Person",
@@ -48,57 +51,79 @@ const tableHeaders = [
   "Actions",
 ];
 
-// Sample restaurant data including document files and status
-const restaurantData: Restaurant[] = [
-  {
-    restaurantName: "Pizza Palace",
-    contactPerson: "John Doe",
-    phoneNumber: "+1-123-456-7890",
-    businessType: "Restaurant",
-    cuisineType: "Italian",
-    operatingHours: "10 AM - 10 PM",
-    deliveryRadius: "5 miles",
-    taxId: "TAX12345",
-    streetAddress: "123 Main Street",
-    city: "New York",
-    state: "NY",
-    zipCode: "10001",
-    country: "USA",
-    email: "contact@pizzapalace.com",
-    businessLicense: null,
-    foodSafetyCert: null,
-    exteriorPhoto: null,
-    logo: null,
-    status: "Pending",
-  },
-  {
-    restaurantName: "Burger Haven",
-    contactPerson: "Jane Smith",
-    phoneNumber: "+1-987-654-3210",
-    businessType: "Fast Food Chain",
-    cuisineType: "American",
-    operatingHours: "9 AM - 11 PM",
-    deliveryRadius: "10 miles",
-    taxId: "TAX67890",
-    streetAddress: "456 Elm Street",
-    city: "Los Angeles",
-    state: "CA",
-    zipCode: "90001",
-    country: "USA",
-    email: "info@burgerhaven.com",
-    businessLicense: new File([""], "business-license.pdf"),
-    foodSafetyCert: new File([""], "food-safety-cert.pdf"),
-    exteriorPhoto: new File([""], "exterior-photo.jpg"),
-    logo: new File([""], "logo.png"),
-    status: "Pending",
-  },
-];
-
 const RequestRestaurant = () => {
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const limit = 10;
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        setLoading(true);
+        const response = await getAllRestaurants(page, limit);
+        setRestaurants(
+          response.data.map((restaurant: Restaurant) => ({
+            ...restaurant,
+            status: restaurant.status ? restaurant.status.trim().toLowerCase() : "pending",
+          }))
+        );
+        setTotalPages(response.pagination.totalPages);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch restaurants");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRestaurants();
+  }, [page]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
   return (
     <div className="p-4">
       <ResturentTitle text="Restaurant Requests" />
-      <AdminResturentRequestTable headers={tableHeaders} data={restaurantData} />
+      {loading && <p className="text-center text-gray-600">Loading...</p>}
+      {error && <p className="text-center text-red-600">{error}</p>}
+      {!loading && !error && (
+        <>
+          <AdminResturentRequestTable headers={tableHeaders} data={restaurants} />
+          <div className="flex justify-center mt-4 space-x-2">
+            <button
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+              className={`px-4 py-2 rounded-lg ${
+                page === 1
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-indigo-500 text-white hover:bg-indigo-600"
+              }`}
+            >
+              Previous
+            </button>
+            <span className="px-4 py-2 text-gray-800 dark:text-gray-200">
+              Page {page} of {totalPages}
+            </span>
+            <button
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page === totalPages}
+              className={`px-4 py-2 rounded-lg ${
+                page === totalPages
+                  ? "bg-gray-300 cursor-not-allowed"
+                  : "bg-indigo-500 text-white hover:bg-indigo-600"
+              }`}
+            >
+              Next
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };

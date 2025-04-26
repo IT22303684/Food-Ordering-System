@@ -86,9 +86,12 @@ function SignIn() {
           role: response.user.role,
         });
       }
+      
       if(response.user.role == "RESTAURANT"){
         navigate("/resturent-dashboard");
-      }else{
+      }else if(response.user.role == "ADMIN"){
+        navigate("/admin-dashboard");
+      }else {
         navigate("/");
       }
       
