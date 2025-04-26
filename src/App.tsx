@@ -59,17 +59,19 @@ const AdminRoutes = () => {
 //-------------- resturent--------------------------------------
 import ResturentLayout from "./pages/restaurants/ResturentLayout";
 import Overview from "./pages/restaurants/Overview";
-import NewOrder from "./pages/restaurants/NewOrder";
+
+import PendingOrders from "./pages/restaurants/PendingOrders";
 import PreparingOrder from "./pages/restaurants/PreparingOrder";
-import ReadyOrder from "./pages/restaurants/ReadyOrder";
-import CompleteOrder from "./pages/restaurants/CompleteOrder";
 import CancelledOrder from "./pages/restaurants/CanceledOrder";
+import ConfirmedOrders from "./pages/restaurants/ConfirmedOrders";
+import ReadyOrders from "./pages/restaurants/ReadyOrders";
+import CompletedOrders from "./pages/restaurants/CompletedOrders";
+import OutForDeliveryOrders from "./pages/restaurants/OutForDeliveryOrders";
 import ManageMenuItems from "./pages/restaurants/ManageMenuItems";
 import AddNewMenuItem from "./pages/restaurants/AddNewMenuItem";
 import AllMenuItems from "./pages/restaurants/AllMenuItems";
 import AddCategories from "./pages/restaurants/AddCategories";
 import CategoryManagement from "./pages/restaurants/CategoryManagement";
-
 import FoodHomePage from "./pages/FoodHomePage";
 import Restaurant from "./pages/Restaurant";
 import ResturentProfile from "./pages/restaurants/ResturentProfile";
@@ -87,10 +89,12 @@ const ResturentRoutes = () => {
         <Route path="profile" element={<ResturentProfile />} />
         {/* Order-related routes grouped under /orders */}
         <Route path="orders">
-          <Route path="new" element={<NewOrder />} />
+          <Route path="new" element={<PendingOrders />} />
+          <Route path="confirme" element={<ConfirmedOrders />} />
           <Route path="preparing" element={<PreparingOrder />} />
-          <Route path="ready" element={<ReadyOrder />} />
-          <Route path="completed" element={<CompleteOrder />} />
+          <Route path="ready" element={<ReadyOrders />} />
+          <Route path="out-for-delivery" element={<OutForDeliveryOrders />} />
+          <Route path="completed" element={<CompletedOrders />} />
           <Route path="canceled" element={<CancelledOrder />} />
         </Route>
         {/* menu-related routes grouped under /menu-management */}

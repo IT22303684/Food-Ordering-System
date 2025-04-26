@@ -1,4 +1,5 @@
 const BASE_URL = "http://localhost:3010/api";
+import { jwtDecode } from "jwt-decode";
 
 //------------------------ Auth APIs ----------------------
 
@@ -1151,7 +1152,7 @@ export const createCart = async (userId: string) => {
     throw error;
   }
 };
-
+//------------------- order api's ------------------
 interface OrderItem {
   menuItemId: string;
   name: string;
@@ -1173,6 +1174,17 @@ interface CreateOrderData {
   items: OrderItem[];
   deliveryAddress: DeliveryAddress;
   paymentMethod: "CREDIT_CARD" | "CASH" | "ONLINE";
+}
+
+interface OrderStatus {
+  status:
+    | "PENDING"
+    | "CONFIRMED"
+    | "PREPARING"
+    | "READY_FOR_PICKUP"
+    | "ON_THE_WAY"
+    | "DELIVERED"
+    | "CANCELLED";
 }
 
 export const createOrder = async (orderData: CreateOrderData) => {
@@ -1203,16 +1215,43 @@ export const createOrder = async (orderData: CreateOrderData) => {
   }
 };
 
-interface OrderStatus {
-  status:
-    | "PENDING"
-    | "CONFIRMED"
-    | "PREPARING"
-    | "READY_FOR_PICKUP"
-    | "ON_THE_WAY"
-    | "DELIVERED"
-    | "CANCELLED";
-}
+// Get orders by restaurant ID
+// Fetches orders for the restaurant ID derived from the JWT token's userId
+export const getOrdersByRestaurantId = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    // Decode JWT token to extract userId (used as restaurantId)
+    const decoded: { userId: string } = jwtDecode(token);
+    const restaurantId = decoded.userId;
+    if (!restaurantId) {
+      throw new Error("Restaurant ID not found in token");
+    }
+    console.log("resturent id eka thamai apu meka ",restaurantId)
+
+    const response = await fetch(`${BASE_URL}/orders/restaurant/${restaurantId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch restaurant orders");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Get restaurant orders error:", error);
+    throw error;
+  }
+};
+
 
 // Get orders by user ID
 export const getOrdersByUserId = async (userId: string) => {
@@ -1241,6 +1280,7 @@ export const getOrdersByUserId = async (userId: string) => {
     throw error;
   }
 };
+
 
 // Get order by ID
 export const getOrderById = async (orderId: string) => {
