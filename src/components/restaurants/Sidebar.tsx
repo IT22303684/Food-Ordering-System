@@ -36,10 +36,12 @@ const menuItems: MenuItem[] = [
     icon: <FiSunset />,
     subItems: [
       { path: "/resturent-dashboard/orders/new", title: "New Orders" },
+      { path: "/resturent-dashboard/orders/confirme", title: "Confirme Order" },
       { path: "/resturent-dashboard/orders/preparing", title: "Preparing Orders" },
-      { path: "/resturent-dashboard/orders/ready", title: "Ready for Pickup" },
-      { path: "/resturent-dashboard/orders/completed", title: "Completed Orders" },
-      { path: "/resturent-dashboard/orders/canceled", title: "Canceled Orders" },
+      { path: "/resturent-dashboard/orders/ready", title: "Ready Orders" },   
+      { path: "/resturent-dashboard/orders/out-for-delivery", title: "Out For Delivery" },
+      { path: "/resturent-dashboard/orders/completed", title: "Complete Orders" },
+      { path: "/resturent-dashboard/orders/canceled", title: "Canceled Orders" },   
     ],
   },
   {
