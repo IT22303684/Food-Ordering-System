@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { createOrder, getProfile, updateOrderStatus } from "../utils/api";
+import { createOrder, getProfile, updateOrderStatus, initiatePayment } from "../utils/api";
 import { toast } from "react-toastify";
 
 interface Address {
@@ -15,12 +15,12 @@ interface Address {
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
-  const { cartItems, cartTotal, clearCartItems } = useCart();
+  const { cartId, cartItems, cartTotal, clearCartItems } = useCart();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showNewAddress, setShowNewAddress] = useState(false);
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null);
-
+  const [showCardDetails, setShowCardDetails] = useState(false);
   const [deliveryAddress, setDeliveryAddress] = useState<Address>({
     street: "",
     city: "",
@@ -28,10 +28,15 @@ const Checkout: React.FC = () => {
     zipCode: "",
     country: "Sri Lanka",
   });
-
   const [paymentMethod, setPaymentMethod] = useState<
-    "CREDIT_CARD" | "CASH" | "ONLINE"
+    "CREDIT_CARD" | "DEBIT_CARD" | "CASH" | "ONLINE"
   >("CREDIT_CARD");
+  const [cardDetails, setCardDetails] = useState({
+    cardNumber: "",
+    cardHolderName: "",
+    expiryDate: "",
+    cvv: "",
+  });
 
   useEffect(() => {
     const fetchDefaultAddress = async () => {
@@ -63,27 +68,88 @@ const Checkout: React.FC = () => {
     }));
   };
 
-  const handleCreditCardPayment = async (orderId: string) => {
+  const handleCardDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCardDetails((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleCardPayment = async (orderId: string, cartId: string) => {
     try {
-      // Here you would integrate with your payment service provider
-      // For example, using Stripe:
-      // const stripe = await loadStripe('your_publishable_key');
-      // const { error } = await stripe.redirectToCheckout({
-      //   sessionId: 'your_session_id'
-      // });
-
-      // For demo purposes, we'll simulate a successful payment
-      const paymentSuccess = true; // Replace with actual payment processing
-
-      if (paymentSuccess) {
-        // Update order status to CONFIRMED after successful payment
-        await updateOrderStatus(orderId, "CONFIRMED");
-        await clearCartItems();
-        toast.success("Payment successful!");
-        navigate("/orders");
-      } else {
-        throw new Error("Payment failed");
+      if (!cardDetails.cardNumber || !cardDetails.cardHolderName || !cardDetails.expiryDate || !cardDetails.cvv) {
+        throw new Error("Please fill in all card details");
       }
+
+      // Basic client-side validation
+      if (!/^\d{16}$/.test(cardDetails.cardNumber.replace(/\s/g, ""))) {
+        throw new Error("Invalid card number");
+      }
+      if (!/^\d{2}\/\d{2}$/.test(cardDetails.expiryDate)) {
+        throw new Error("Invalid expiry date (MM/YY)");
+      }
+      if (!/^\d{3,4}$/.test(cardDetails.cvv)) {
+        throw new Error("Invalid CVV");
+      }
+
+      const paymentData = {
+        userId: user!.id,
+        cartId,
+        orderId,
+        restaurantId: cartItems[0].restaurantId,
+        items: cartItems.map((item) => ({
+          menuItemId: item.menuItemId,
+          restaurantId: item.restaurantId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          totalPrice: item.price * item.quantity,
+        })),
+        totalAmount: cartTotal,
+        paymentMethod: paymentMethod as "CREDIT_CARD" | "DEBIT_CARD",
+        cardDetails: {
+          cardNumber: cardDetails.cardNumber,
+          cardHolderName: cardDetails.cardHolderName,
+        },
+      };
+
+      const response = await initiatePayment(paymentData);
+      const { data } = response;
+      const { payherePayload, hash } = data;
+
+      // Log payload and hash for debugging
+      console.log("PayHere Payload:", payherePayload);
+      console.log("PayHere Hash:", hash);
+
+      // Validate required fields
+      if (!payherePayload.merchant_id || !payherePayload.order_id || !payherePayload.amount || !payherePayload.currency) {
+        throw new Error("Invalid PayHere payload: Missing required fields");
+      }
+      if (!hash) {
+        throw new Error("Invalid PayHere hash: Hash is missing");
+      }
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "https://sandbox.payhere.lk/pay/checkout";
+
+      Object.keys(payherePayload).forEach((key) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = payherePayload[key];
+        form.appendChild(input);
+      });
+
+      const hashInput = document.createElement("input");
+      hashInput.type = "hidden";
+      hashInput.name = "hash";
+      hashInput.value = hash;
+      form.appendChild(hashInput);
+
+      document.body.appendChild(form);
+      form.submit();
     } catch (error) {
       console.error("Payment error:", error);
       toast.error(error instanceof Error ? error.message : "Payment failed");
@@ -102,14 +168,21 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    // Validate address
     if (Object.values(deliveryAddress).some((value) => !value)) {
       toast.error("Please fill in all address fields");
       return;
     }
 
+    if ((paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") && !cartId) {
+      toast.error("Cart not found. Please add items to cart.");
+      return;
+    }
+
     try {
       setLoading(true);
+      const orderPaymentMethod =
+        paymentMethod === "DEBIT_CARD" ? "CREDIT_CARD" : paymentMethod;
+
       const orderData = {
         userId: user.id,
         restaurantId: cartItems[0].restaurantId,
@@ -120,16 +193,20 @@ const Checkout: React.FC = () => {
           quantity: item.quantity,
         })),
         deliveryAddress,
-        paymentMethod,
+        paymentMethod: orderPaymentMethod as "CREDIT_CARD" | "CASH" | "ONLINE",
       };
 
       const order = await createOrder(orderData);
 
-      if (paymentMethod === "CREDIT_CARD") {
-        // Handle credit card payment
-        await handleCreditCardPayment(order._id);
+      if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
+        if (!showCardDetails) {
+          setShowCardDetails(true);
+          setLoading(false);
+          return;
+        }
+        await handleCardPayment(order._id, cartId!);
       } else {
-        // For other payment methods, just clear cart and navigate
+        await updateOrderStatus(order._id, "CONFIRMED");
         await clearCartItems();
         toast.success("Order placed successfully!");
         navigate("/orders");
@@ -140,9 +217,23 @@ const Checkout: React.FC = () => {
         error instanceof Error ? error.message : "Failed to place order"
       );
     } finally {
-      setLoading(false);
+      if (paymentMethod !== "CREDIT_CARD" && paymentMethod !== "DEBIT_CARD" || showCardDetails) {
+        setLoading(false);
+      }
     }
   };
+
+  useEffect(() => {
+    if (paymentMethod !== "CREDIT_CARD" && paymentMethod !== "DEBIT_CARD") {
+      setShowCardDetails(false);
+      setCardDetails({
+        cardNumber: "",
+        cardHolderName: "",
+        expiryDate: "",
+        cvv: "",
+      });
+    }
+  }, [paymentMethod]);
 
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
@@ -170,7 +261,7 @@ const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* Delivery Address Form */}
+        {/* Delivery Address and Payment Form */}
         <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
           <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
 
@@ -306,7 +397,6 @@ const Checkout: React.FC = () => {
               </div>
             )}
 
-            {/* Payment Method */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Payment Method
@@ -315,23 +405,91 @@ const Checkout: React.FC = () => {
                 value={paymentMethod}
                 onChange={(e) =>
                   setPaymentMethod(
-                    e.target.value as "CREDIT_CARD" | "CASH" | "ONLINE"
+                    e.target.value as "CREDIT_CARD" | "DEBIT_CARD" | "CASH" | "ONLINE"
                   )
                 }
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
               >
                 <option value="CREDIT_CARD">Credit Card</option>
+                <option value="DEBIT_CARD">Debit Card</option>
                 <option value="CASH">Cash on Delivery</option>
                 <option value="ONLINE">Online Payment</option>
               </select>
             </div>
+
+            {(paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") && showCardDetails && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Card Number
+                  </label>
+                  <input
+                    type="text"
+                    name="cardNumber"
+                    value={cardDetails.cardNumber}
+                    onChange={handleCardDetailsChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                    required
+                    placeholder="1234 5678 1234 5678"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cardholder Name
+                  </label>
+                  <input
+                    type="text"
+                    name="cardHolderName"
+                    value={cardDetails.cardHolderName}
+                    onChange={handleCardDetailsChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                    required
+                    placeholder="John Doe"
+                  />
+                </div>
+                <div className="flex space-x-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Expiry Date
+                    </label>
+                    <input
+                      type="text"
+                      name="expiryDate"
+                      value={cardDetails.expiryDate}
+                      onChange={handleCardDetailsChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                      required
+                      placeholder="MM/YY"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      CVV
+                    </label>
+                    <input
+                      type="text"
+                      name="cvv"
+                      value={cardDetails.cvv}
+                      onChange={handleCardDetailsChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                      required
+                      placeholder="123"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50"
             >
-              {loading ? "Placing Order..." : "Place Order"}
+              {loading
+                ? "Placing Order..."
+                : (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") && !showCardDetails
+                ? "Proceed to Payment"
+                : "Place Order"}
             </button>
           </form>
         </div>

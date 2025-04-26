@@ -1376,4 +1376,54 @@ export const cancelOrder = async (orderId: string) => {
   }
 };
 
+//--------------------------- Payment APIs -------------------
+
+interface PaymentData {
+  userId: string;
+  cartId: string;
+  orderId: string;
+  restaurantId: string;
+  items: OrderItem[];
+  totalAmount: number;
+  paymentMethod: "CREDIT_CARD" | "DEBIT_CARD";
+  cardDetails: {
+    cardNumber: string;
+    cardHolderName: string;
+  };
+}
+
+/**
+ * Initiates a payment process by calling the payment service's /process endpoint.
+ * Returns the PayHere payload and hash for redirecting to the PayHere payment page.
+ * @param paymentData - Data required to initiate the payment
+ * @returns Promise resolving to the payment initiation response
+ * @throws Error if the request fails or token is missing
+ */
+export const initiatePayment = async (paymentData: PaymentData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/payments/process`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(paymentData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to initiate payment");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Initiate payment error:", error);
+    throw error;
+  }
+};
 
