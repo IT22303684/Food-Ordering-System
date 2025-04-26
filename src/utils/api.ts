@@ -537,6 +537,35 @@ export const updateRestaurantStatus = async (restaurantId: string, status: strin
   }
 };
 
+//Update restaurant availability
+export const updateRestaurantAvailability = async (availability: boolean) => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await fetch(`${BASE_URL}/restaurants/availability`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ availability }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to update restaurant availability');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Update restaurant availability error:', error);
+    throw error;
+  }
+}
+
 //--------------------------- Menu items api's -------------------
 
 // Get menu items by restaurant ID (public or authenticated)
@@ -574,10 +603,7 @@ export const getMenuItemsByRestaurantId = async (restaurantId: string, isAuthent
 // Fetch a specific menu item by ID
 export const getMenuItemById = async (restaurantId: string, menuItemId: string) => {
   try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
+   
 
     const response = await fetch(
       `${BASE_URL}/restaurants/${restaurantId}/menu-items/${menuItemId}`,
@@ -585,7 +611,6 @@ export const getMenuItemById = async (restaurantId: string, menuItemId: string) 
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
       }
     );
