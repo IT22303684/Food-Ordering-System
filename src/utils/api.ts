@@ -878,3 +878,305 @@ export const cancelOrder = async (orderId: string) => {
     throw error;
   }
 };
+
+//------------------------ Driver APIs ----------------------
+
+interface DriverFormData {
+  userId: string;
+  vehicleType: "BIKE" | "CAR" | "VAN";
+  vehicleNumber: string;
+  location: [number, number];
+}
+
+// Register driver
+export const registerDriver = async (driverData: DriverFormData) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/drivers/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(driverData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to register driver");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Register driver error:", error);
+    throw error;
+  }
+};
+
+// Update driver location
+export const updateDriverLocation = async (
+  driverId: string,
+  location: [number, number]
+) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/drivers/${driverId}/location`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ location }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update location");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update location error:", error);
+    throw error;
+  }
+};
+
+// Update driver availability
+export const updateDriverAvailability = async (
+  driverId: string,
+  isAvailable: boolean
+) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    if (!driverId) {
+      throw new Error("Driver ID is required");
+    }
+
+    const response = await fetch(
+      `${BASE_URL}/drivers/${driverId}/availability`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          isAvailable,
+          driverId, // Add driverId to the request body
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update availability");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Update availability error:", error);
+    throw error;
+  }
+};
+
+// Get available drivers
+export const getAvailableDrivers = async (
+  latitude: number,
+  longitude: number,
+  maxDistance: number = 5000
+) => {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/drivers/available?latitude=${latitude}&longitude=${longitude}&maxDistance=${maxDistance}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch available drivers");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Get available drivers error:", error);
+    throw error;
+  }
+};
+
+// Get driver details
+export const getDriverDetails = async (driverId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/drivers/${driverId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch driver details");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Get driver details error:", error);
+    throw error;
+  }
+};
+
+// Get current driver details
+export const getCurrentDriver = async (userId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/drivers/me?userId=${userId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch driver details");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Get current driver error:", error);
+    throw error;
+  }
+};
+
+// Assign delivery to driver
+export const assignDelivery = async (driverId: string, deliveryId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/drivers/${driverId}/assign`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ deliveryId }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to assign delivery");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Assign delivery error:", error);
+    throw error;
+  }
+};
+
+// Complete delivery
+export const completeDelivery = async (driverId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/drivers/${driverId}/complete`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to complete delivery");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Complete delivery error:", error);
+    throw error;
+  }
+};
+
+// Delivery Service API
+export const assignDeliveryDriver = async (
+  orderId: string,
+  customerLocation: [number, number]
+) => {
+  const response = await fetch(`${BASE_URL}/api/delivery/assign`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      orderId,
+      customerLocation,
+    }),
+  });
+  return response.json();
+};
+
+export const updateDeliveryStatus = async (
+  deliveryId: string,
+  status: string,
+  location: [number, number]
+) => {
+  const response = await fetch(
+    `${BASE_URL}/api/delivery/${deliveryId}/status`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        status,
+        location,
+      }),
+    }
+  );
+  return response.json();
+};
+
+export const getDeliveryStatus = async (deliveryId: string) => {
+  const response = await fetch(`${BASE_URL}/api/delivery/${deliveryId}/status`);
+  return response.json();
+};
+
+export const getDriverLocation = async (deliveryId: string) => {
+  const response = await fetch(
+    `${BASE_URL}/api/delivery/${deliveryId}/location`
+  );
+  return response.json();
+};

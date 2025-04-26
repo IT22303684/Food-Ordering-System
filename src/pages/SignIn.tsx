@@ -84,14 +84,19 @@ function SignIn() {
           id: response.user.id,
           email: response.user.email,
           role: response.user.role,
+          firstName: response.user.firstName || "",
+          lastName: response.user.lastName || "",
         });
       }
-      if(response.user.role == "RESTAURANT"){
+      if (response.user.role == "RESTAURANT") {
         navigate("/resturent-dashboard");
-      }else{
+      } else {
         navigate("/");
       }
-      
+
+      if (response.user.role == "DELIVERY") {
+        navigate("/driver-dashboard");
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         toast.error(error.message);
@@ -143,7 +148,6 @@ function SignIn() {
               className={`w-full font-PlusSans text-[14px] font-normal leading-[24px] text-black placeholder:text-[#646464] focus:outline-none ${
                 emailError ? "text-red-500" : ""
               }`}
-              
             />
             <div
               className={`h-[1px] w-full ${

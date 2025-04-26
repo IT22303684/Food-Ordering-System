@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { CartProvider } from "@/context/CartContext";
+import { DriverProvider } from "@/context/DriverContext";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Home from "./pages/Home";
@@ -16,6 +17,7 @@ import Order from "./pages/Order";
 import Cart from "./pages/Cart";
 import ResturentRegister from "./pages/ResturentRegister";
 import Profile from "./pages/Profile";
+import DriverDashboard from "./pages/Drivers/DriverDashboard";
 
 //-------------- admin--------------------------------------
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -60,6 +62,7 @@ import ResturentProfile from "./pages/restaurants/ResturentProfile";
 import MobileBottomNav from "./components/UI/MobileBottomNav";
 import Checkout from "./pages/Checkout";
 import OrdersList from "./pages/OrdersList";
+
 const ResturentRoutes = () => {
   return (
     <Routes>
@@ -87,58 +90,77 @@ const ResturentRoutes = () => {
   );
 };
 
+//-------------- driver--------------------------------------
+const DriverRoutes = () => {
+  console.log("DriverRoutes component rendered");
+  return (
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<DriverDashboard />} />
+      </Route>
+    </Routes>
+  );
+};
+
 function App() {
+  console.log("App component rendered");
   return (
     <BrowserRouter>
       <AuthProvider>
         <CartProvider>
-          <ToastContainer
-            position="top-right"
-            autoClose={3000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
-          <Routes>
-            <Route path="/" element={<Layout />}>
-              <Route path="/" element={<Home />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/resturent-signup" element={<ResturentRegister />} />
-              <Route path="/restaurants" element={<Restaurant />} />
-              <Route path="/payment-method" element={<PaymentMethod />} />
-              <Route path="/card-details" element={<CardDetails />} />
-              <Route
-                path="/order-confirmation"
-                element={<OrderConfirmation />}
-              />
-              <Route path="/orders" element={<OrdersList />} />
-              <Route path="/order/:orderId" element={<Order />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/account" element={<Profile />} />
-              <Route
-                path="/restaurant/:restaurantId/menu"
-                element={<RestaurantMenu />}
-              />
-              <Route
-                path="/restaurant/:restaurantId/menu/:menuItemId"
-                element={<ViewMenuItem />}
-              />
-              <Route path="menu" element={<FoodHomePage />} />
-            </Route>
-            <Route
-              path="/resturent-dashboard/*"
-              element={<ResturentRoutes />}
+          <DriverProvider>
+            <ToastContainer
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
             />
-            <Route path="/admin-dashboard/*" element={<AdminRoutes />} />
-          </Routes>
-          <MobileBottomNav />
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/signin" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route
+                  path="/resturent-signup"
+                  element={<ResturentRegister />}
+                />
+                <Route path="/restaurants" element={<Restaurant />} />
+                <Route path="/payment-method" element={<PaymentMethod />} />
+                <Route path="/card-details" element={<CardDetails />} />
+                <Route
+                  path="/order-confirmation"
+                  element={<OrderConfirmation />}
+                />
+                <Route path="/orders" element={<OrdersList />} />
+                <Route path="/order/:orderId" element={<Order />} />
+                <Route path="/cart" element={<Cart />} />
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/account" element={<Profile />} />
+                <Route
+                  path="/restaurant/:restaurantId/menu"
+                  element={<RestaurantMenu />}
+                />
+                <Route
+                  path="/restaurant/:restaurantId/menu/:menuItemId"
+                  element={<ViewMenuItem />}
+                />
+                <Route path="menu" element={<FoodHomePage />} />
+              </Route>
+              <Route
+                path="/resturent-dashboard/*"
+                element={<ResturentRoutes />}
+              />
+              <Route path="/admin-dashboard/*" element={<AdminRoutes />} />
+              <Route path="/driver-dashboard/*" element={<DriverRoutes />} />
+            </Routes>
+            <MobileBottomNav />
+          </DriverProvider>
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>

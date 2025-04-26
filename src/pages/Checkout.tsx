@@ -2,8 +2,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { createOrder, getProfile, updateOrderStatus } from "../utils/api";
+import {
+  createOrder,
+  getProfile,
+  updateOrderStatus,
+  assignDeliveryDriver,
+} from "../utils/api";
 import { toast } from "react-toastify";
+import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 
 interface Address {
   street: string;
@@ -20,6 +26,10 @@ const Checkout: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showNewAddress, setShowNewAddress] = useState(false);
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null);
+  const [deliveryLocation, setDeliveryLocation] = useState<
+    [number, number] | null
+  >(null);
+  const [mapCenter, setMapCenter] = useState({ lat: 1.3143, lng: 103.7093 });
 
   const [deliveryAddress, setDeliveryAddress] = useState<Address>({
     street: "",
@@ -90,6 +100,14 @@ const Checkout: React.FC = () => {
     }
   };
 
+  const handleMapClick = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const location: [number, number] = [e.latLng.lat(), e.latLng.lng()];
+      setDeliveryLocation(location);
+      setMapCenter({ lat: location[0], lng: location[1] });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) {
@@ -102,9 +120,8 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    // Validate address
-    if (Object.values(deliveryAddress).some((value) => !value)) {
-      toast.error("Please fill in all address fields");
+    if (!deliveryLocation) {
+      toast.error("Please select a delivery location on the map");
       return;
     }
 
@@ -125,11 +142,12 @@ const Checkout: React.FC = () => {
 
       const order = await createOrder(orderData);
 
+      // Assign delivery driver
+      await assignDeliveryDriver(order._id, deliveryLocation);
+
       if (paymentMethod === "CREDIT_CARD") {
-        // Handle credit card payment
         await handleCreditCardPayment(order._id);
       } else {
-        // For other payment methods, just clear cart and navigate
         await clearCartItems();
         toast.success("Order placed successfully!");
         navigate("/orders");
@@ -170,170 +188,224 @@ const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* Delivery Address Form */}
+        {/* Delivery Address and Location */}
         <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
-          <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
+          <h2 className="text-xl font-semibold mb-4">Delivery Location</h2>
 
-          {defaultAddress && (
-            <div className="mb-6">
-              <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                <h3 className="font-medium text-gray-700 mb-2">
-                  Default Address
-                </h3>
-                <p className="text-gray-600">{defaultAddress.street}</p>
-                <p className="text-gray-600">
-                  {defaultAddress.city}, {defaultAddress.state}{" "}
-                  {defaultAddress.zipCode}
-                </p>
-                <p className="text-gray-600">{defaultAddress.country}</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowNewAddress(!showNewAddress)}
-                className="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center gap-2"
+          <div className="h-64 w-full rounded-lg overflow-hidden mb-4">
+            <LoadScript
+              googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+              libraries={["places"]}
+            >
+              <GoogleMap
+                mapContainerStyle={{ width: "100%", height: "100%" }}
+                center={mapCenter}
+                zoom={15}
+                onClick={handleMapClick}
+                options={{
+                  disableDefaultUI: false,
+                  zoomControl: true,
+                  mapTypeControl: true,
+                  streetViewControl: true,
+                  fullscreenControl: true,
+                }}
               >
-                {showNewAddress ? (
-                  <>
-                    <span>Use Default Address</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M5 15l7-7 7 7"
-                      />
-                    </svg>
-                  </>
-                ) : (
-                  <>
-                    <span>Use Different Address</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
-                  </>
+                {deliveryLocation && (
+                  <Marker
+                    position={{
+                      lat: deliveryLocation[0],
+                      lng: deliveryLocation[1],
+                    }}
+                    icon={{
+                      url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
+                    }}
+                  />
                 )}
-              </button>
+              </GoogleMap>
+            </LoadScript>
+          </div>
+
+          <p className="text-sm text-gray-600 mb-4">
+            Click on the map to set your delivery location
+          </p>
+
+          {deliveryLocation && (
+            <div className="mb-4">
+              <p className="text-sm font-medium text-gray-700">
+                Selected Location:
+              </p>
+              <p className="text-sm text-gray-600">
+                Lat: {deliveryLocation[0].toFixed(4)}, Long:{" "}
+                {deliveryLocation[1].toFixed(4)}
+              </p>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {showNewAddress && (
-              <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Street
-                  </label>
-                  <input
-                    type="text"
-                    name="street"
-                    value={deliveryAddress.street}
-                    onChange={handleAddressChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                    required
-                  />
+          {/* Delivery Address Form */}
+          <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
+            <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
+
+            {defaultAddress && (
+              <div className="mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                  <h3 className="font-medium text-gray-700 mb-2">
+                    Default Address
+                  </h3>
+                  <p className="text-gray-600">{defaultAddress.street}</p>
+                  <p className="text-gray-600">
+                    {defaultAddress.city}, {defaultAddress.state}{" "}
+                    {defaultAddress.zipCode}
+                  </p>
+                  <p className="text-gray-600">{defaultAddress.country}</p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={deliveryAddress.city}
-                    onChange={handleAddressChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    State
-                  </label>
-                  <input
-                    type="text"
-                    name="state"
-                    value={deliveryAddress.state}
-                    onChange={handleAddressChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Zip Code
-                  </label>
-                  <input
-                    type="text"
-                    name="zipCode"
-                    value={deliveryAddress.zipCode}
-                    onChange={handleAddressChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    name="country"
-                    value={deliveryAddress.country}
-                    onChange={handleAddressChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                    required
-                    disabled
-                  />
-                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowNewAddress(!showNewAddress)}
+                  className="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center gap-2"
+                >
+                  {showNewAddress ? (
+                    <>
+                      <span>Use Default Address</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 15l7-7 7 7"
+                        />
+                      </svg>
+                    </>
+                  ) : (
+                    <>
+                      <span>Use Different Address</span>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </>
+                  )}
+                </button>
               </div>
             )}
 
-            {/* Payment Method */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payment Method
-              </label>
-              <select
-                value={paymentMethod}
-                onChange={(e) =>
-                  setPaymentMethod(
-                    e.target.value as "CREDIT_CARD" | "CASH" | "ONLINE"
-                  )
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-              >
-                <option value="CREDIT_CARD">Credit Card</option>
-                <option value="CASH">Cash on Delivery</option>
-                <option value="ONLINE">Online Payment</option>
-              </select>
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {showNewAddress && (
+                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Street
+                    </label>
+                    <input
+                      type="text"
+                      name="street"
+                      value={deliveryAddress.street}
+                      onChange={handleAddressChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      City
+                    </label>
+                    <input
+                      type="text"
+                      name="city"
+                      value={deliveryAddress.city}
+                      onChange={handleAddressChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      State
+                    </label>
+                    <input
+                      type="text"
+                      name="state"
+                      value={deliveryAddress.state}
+                      onChange={handleAddressChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Zip Code
+                    </label>
+                    <input
+                      type="text"
+                      name="zipCode"
+                      value={deliveryAddress.zipCode}
+                      onChange={handleAddressChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Country
+                    </label>
+                    <input
+                      type="text"
+                      name="country"
+                      value={deliveryAddress.country}
+                      onChange={handleAddressChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                      required
+                      disabled
+                    />
+                  </div>
+                </div>
+              )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50"
-            >
-              {loading ? "Placing Order..." : "Place Order"}
-            </button>
-          </form>
+              {/* Payment Method */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Payment Method
+                </label>
+                <select
+                  value={paymentMethod}
+                  onChange={(e) =>
+                    setPaymentMethod(
+                      e.target.value as "CREDIT_CARD" | "CASH" | "ONLINE"
+                    )
+                  }
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                >
+                  <option value="CREDIT_CARD">Credit Card</option>
+                  <option value="CASH">Cash on Delivery</option>
+                  <option value="ONLINE">Online Payment</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !deliveryLocation}
+                className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50"
+              >
+                {loading ? "Placing Order..." : "Place Order"}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
