@@ -477,7 +477,6 @@ export const getRestaurantById = async (restaurantId: string) => {
       const errorData = await response.json();
       throw new Error(errorData.message || 'Failed to fetch restaurant details');
     }
-    console.log("menn meka",response.json());
     return await response.json();
   } catch (error) {
     console.error('Fetch restaurant details error:', error);
