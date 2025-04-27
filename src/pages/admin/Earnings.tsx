@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import EarningsTable from "../../components/admin/EarningsTable";
 import RestaurantTitle from "../../components/UI/ResturentTitle";
-import { getAllPayments } from "../../utils/api";
+import { getAllPayments, getAllRestaurants } from "../../utils/api";
 
 export interface Payment {
   _id: string;
@@ -17,12 +17,27 @@ export interface Payment {
   createdAt: string;
   refundedAt?: string;
   refundReason?: string;
+  restaurantId: string;
+  restaurantName?: string; // Added for display
+}
+
+interface Restaurant {
+  _id: string;
+  restaurantName: string;
+}
+
+interface RestaurantTotal {
+  restaurantId: string;
+  restaurantName: string;
+  total: number;
 }
 
 const TABLE_HEADERS: string[] = [
   "Date",
   "Amount",
   "Order ID",
+  "Resturent ID",
+  "Resturent Name",
   "Method",
   "Status",
   "Transaction ID",
@@ -31,34 +46,52 @@ const TABLE_HEADERS: string[] = [
 
 const Earnings: React.FC = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [restaurantNameMap, setRestaurantNameMap] = useState<Map<string, string>>(new Map());
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string>("");
   const [view, setView] = useState<"ALL" | "COMPLETED" | "REFUNDED" | "FAILED">("ALL");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [restaurantTotals, setRestaurantTotals] = useState<RestaurantTotal[]>([]);
 
-  // Calculate total amounts by status
-  const totals = payments.reduce(
-    (acc, payment) => {
-      acc[payment.paymentStatus] = (acc[payment.paymentStatus] || 0) + payment.totalAmount;
-      return acc;
-    },
-    {} as Record<string, number>
-  );
+  // Fetch restaurants and create name map on mount
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await getAllRestaurants();
+        const restaurantList: Restaurant[] = response.data;
+        setRestaurants(restaurantList);
+        // Create restaurant name map
+        const nameMap = new Map<string, string>();
+        restaurantList.forEach((restaurant) => {
+          nameMap.set(restaurant._id, restaurant.restaurantName);
+        });
+        setRestaurantNameMap(nameMap);
+      } catch (err) {
+        console.error("Fetch restaurants error:", err);
+        setError("Failed to fetch restaurants");
+      }
+    };
+    fetchRestaurants();
+  }, []);
 
+  // Fetch payments and map restaurant names using cache
   useEffect(() => {
     const fetchPayments = async () => {
       try {
         setLoading(true);
-        // Validate dates
         const params: {
           status?: string;
+          restaurantId?: string;
           startDate?: string;
           endDate?: string;
           page: number;
           limit: number;
         } = {
           status: view === "ALL" ? undefined : view,
+          restaurantId: selectedRestaurantId || undefined,
           page: 1,
           limit: 50,
         };
@@ -69,8 +102,28 @@ const Earnings: React.FC = () => {
           params.endDate = endDate;
         }
         const response = await getAllPayments(params);
-        setPayments(response.data.payments);
+        const fetchedPayments: Payment[] = response.data.payments;
+
+        // Map restaurant names using cache
+        const paymentsWithNames = fetchedPayments.map((payment) => ({
+          ...payment,
+          restaurantName: restaurantNameMap.get(payment.restaurantId) || "Unknown",
+        }));
+
+        setPayments(paymentsWithNames);
         setError(null);
+
+        // Calculate restaurant totals
+        const totalsByRestaurant = paymentsWithNames.reduce((acc, payment) => {
+          const { restaurantId, restaurantName = "Unknown", totalAmount } = payment;
+          if (!acc[restaurantId]) {
+            acc[restaurantId] = { restaurantId, restaurantName, total: 0 };
+          }
+          acc[restaurantId].total += totalAmount;
+          return acc;
+        }, {} as Record<string, RestaurantTotal>);
+
+        setRestaurantTotals(Object.values(totalsByRestaurant));
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message || "Failed to fetch payments");
@@ -82,7 +135,16 @@ const Earnings: React.FC = () => {
       }
     };
     fetchPayments();
-  }, [view, startDate, endDate]);
+  }, [view, selectedRestaurantId, startDate, endDate, restaurantNameMap]);
+
+  // Calculate total amounts by status
+  const totals = payments.reduce(
+    (acc, payment) => {
+      acc[payment.paymentStatus] = (acc[payment.paymentStatus] || 0) + payment.totalAmount;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   return (
     <div className="p-4">
@@ -130,7 +192,19 @@ const Earnings: React.FC = () => {
             Failed Payments
           </button>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+          <select
+            value={selectedRestaurantId}
+            onChange={(e) => setSelectedRestaurantId(e.target.value)}
+            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">All Restaurants</option>
+            {restaurants.map((restaurant) => (
+              <option key={restaurant._id} value={restaurant._id}>
+                {restaurant.restaurantName}
+              </option>
+            ))}
+          </select>
           <input
             type="date"
             value={startDate}
@@ -171,6 +245,29 @@ const Earnings: React.FC = () => {
           <p className="text-lg font-bold text-red-800 dark:text-red-100">
             LKR {(totals.FAILED || 0).toFixed(2)}
           </p>
+        </div>
+      </div>
+      <div className="mb-4">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2">
+          Restaurant Transaction Totals
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {restaurantTotals.map((total) => (
+            <div
+              key={total.restaurantId}
+              className="p-4 bg-indigo-100 dark:bg-indigo-700 rounded-lg"
+            >
+              <h3 className="text-sm font-semibold text-indigo-600 dark:text-indigo-200">
+                {total.restaurantName}
+              </h3>
+              <p className="text-lg font-bold text-indigo-800 dark:text-indigo-100">
+                LKR {total.total.toFixed(2)}
+              </p>
+            </div>
+          ))}
+          {restaurantTotals.length === 0 && (
+            <p className="text-gray-500 dark:text-gray-400">No transactions found.</p>
+          )}
         </div>
       </div>
       {loading && <div className="text-center">Loading...</div>}
