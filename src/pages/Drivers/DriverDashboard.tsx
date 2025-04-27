@@ -11,6 +11,7 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaUser,
+  FaLocationArrow,
 } from "react-icons/fa";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 
@@ -104,27 +105,43 @@ const DriverDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 mt-20 mb-20 lg:max-w-7xl mx-auto px-4">
-      {/* Driver Information Card */}
+      {/* Driver Profile Card */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-orange-100 rounded-full">
             <FaUser className="text-orange-500 text-2xl" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold">Driver Information</h2>
+            <h2 className="text-xl font-semibold">Driver Profile</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
+              <div className="space-y-2">
                 <p className="text-gray-600">
-                  Name: {user?.firstName} {user?.lastName}
+                  <span className="font-medium">Name:</span> {user?.firstName}{" "}
+                  {user?.lastName}
                 </p>
-                <p className="text-gray-600">Email: {user?.email}</p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Email:</span> {user?.email}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Driver ID:</span> {driver._id}
+                </p>
               </div>
-              <div>
+              <div className="space-y-2">
                 <p className="text-gray-600">
-                  Vehicle Type: {driver?.vehicleType}
+                  <span className="font-medium">Vehicle Type:</span>{" "}
+                  {driver.vehicleType}
                 </p>
                 <p className="text-gray-600">
-                  Vehicle Number: {driver?.vehicleNumber}
+                  <span className="font-medium">Vehicle Number:</span>{" "}
+                  {driver.vehicleNumber}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Status:</span>{" "}
+                  <span
+                    className={isAvailable ? "text-green-600" : "text-red-600"}
+                  >
+                    {isAvailable ? "Available" : "Unavailable"}
+                  </span>
                 </p>
               </div>
             </div>
@@ -132,50 +149,31 @@ const DriverDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Status Card */}
+      {/* Location Information Card */}
       <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-orange-100 rounded-full">
-              <FaMotorcycle className="text-orange-500 text-2xl" />
+            <div className="p-3 bg-blue-100 rounded-full">
+              <FaLocationArrow className="text-blue-500 text-2xl" />
             </div>
             <div>
-              <h2 className="text-xl font-semibold">Driver Status</h2>
+              <h2 className="text-xl font-semibold">Location Information</h2>
               <p className="text-gray-600">
-                Current Status: {isAvailable ? "Available" : "Unavailable"}
+                {currentLocation
+                  ? `Current Location: Lat: ${currentLocation[0].toFixed(
+                      4
+                    )}, Long: ${currentLocation[1].toFixed(4)}`
+                  : "Location not set"}
               </p>
             </div>
           </div>
           <button
-            onClick={handleToggleAvailability}
-            className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
-              isAvailable
-                ? "bg-green-100 text-green-600"
-                : "bg-red-100 text-red-600"
-            }`}
+            onClick={getCurrentLocation}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center space-x-2"
           >
-            {isAvailable ? <FaToggleOn size={24} /> : <FaToggleOff size={24} />}
-            <span>{isAvailable ? "Available" : "Unavailable"}</span>
+            <FaMapMarkerAlt />
+            <span>Update Location</span>
           </button>
-        </div>
-      </div>
-
-      {/* Map Card */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center mb-4">
-          <div className="p-3 bg-blue-100 rounded-full">
-            <FaMapMarkerAlt className="text-blue-500 text-2xl" />
-          </div>
-          <div className="ml-4">
-            <h2 className="text-xl font-semibold">Current Location</h2>
-            <p className="text-gray-600">
-              {currentLocation
-                ? `Lat: ${currentLocation[0].toFixed(
-                    4
-                  )}, Long: ${currentLocation[1].toFixed(4)}`
-                : "Location not set"}
-            </p>
-          </div>
         </div>
         <div className="h-64 w-full rounded-lg overflow-hidden">
           <LoadScript
@@ -207,10 +205,39 @@ const DriverDashboard: React.FC = () => {
               )}
             </GoogleMap>
           </LoadScript>
-          <div className="text-center text-red-500 mt-2">
-            Note: This is a development version of Google Maps. For production
-            use, please replace the API key.
+        </div>
+      </div>
+
+      {/* Status Toggle Card */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-orange-100 rounded-full">
+              <FaMotorcycle className="text-orange-500 text-2xl" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">Driver Status</h2>
+              <p className="text-gray-600">
+                Current Status:{" "}
+                <span
+                  className={isAvailable ? "text-green-600" : "text-red-600"}
+                >
+                  {isAvailable ? "Available" : "Unavailable"}
+                </span>
+              </p>
+            </div>
           </div>
+          <button
+            onClick={handleToggleAvailability}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg ${
+              isAvailable
+                ? "bg-green-100 text-green-600"
+                : "bg-red-100 text-red-600"
+            }`}
+          >
+            {isAvailable ? <FaToggleOn size={24} /> : <FaToggleOff size={24} />}
+            <span>{isAvailable ? "Available" : "Unavailable"}</span>
+          </button>
         </div>
       </div>
 

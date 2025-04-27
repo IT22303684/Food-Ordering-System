@@ -1055,6 +1055,8 @@ export const getCurrentDriver = async (userId: string) => {
       throw new Error("No authentication token found");
     }
 
+    console.log("userId", userId);
+
     const response = await fetch(`${BASE_URL}/drivers/me?userId=${userId}`, {
       method: "GET",
       headers: {
@@ -1134,18 +1136,58 @@ export const completeDelivery = async (driverId: string) => {
 export const assignDeliveryDriver = async (
   orderId: string,
   customerLocation: [number, number]
-) => {
-  const response = await fetch(`${BASE_URL}/api/delivery/assign`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+): Promise<{ status: string; message?: string }> => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    // Send the actual customer location coordinates [longitude, latitude]
+    const requestBody = {
       orderId,
       customerLocation,
-    }),
-  });
-  return response.json();
+    };
+
+    console.log("Assigning delivery driver with data:", requestBody);
+
+    const response = await fetch(`${BASE_URL}/delivery/assign`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const data = await response.json();
+    console.log("Delivery assignment response:", data);
+
+    if (response.status === 404) {
+      return {
+        status: "error",
+        message: "No available drivers found in the area",
+      };
+    }
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to assign delivery driver");
+    }
+
+    return {
+      status: "success",
+      message: data.message,
+    };
+  } catch (error) {
+    console.error("Delivery assignment error:", error);
+    return {
+      status: "error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to assign delivery driver",
+    };
+  }
 };
 
 export const updateDeliveryStatus = async (
@@ -1153,30 +1195,25 @@ export const updateDeliveryStatus = async (
   status: string,
   location: [number, number]
 ) => {
-  const response = await fetch(
-    `${BASE_URL}/api/delivery/${deliveryId}/status`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        status,
-        location,
-      }),
-    }
-  );
+  const response = await fetch(`${BASE_URL}/delivery/${deliveryId}/status`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      status,
+      location,
+    }),
+  });
   return response.json();
 };
 
 export const getDeliveryStatus = async (deliveryId: string) => {
-  const response = await fetch(`${BASE_URL}/api/delivery/${deliveryId}/status`);
+  const response = await fetch(`${BASE_URL}/delivery/${deliveryId}/status`);
   return response.json();
 };
 
 export const getDriverLocation = async (deliveryId: string) => {
-  const response = await fetch(
-    `${BASE_URL}/api/delivery/${deliveryId}/location`
-  );
+  const response = await fetch(`${BASE_URL}/delivery/${deliveryId}/location`);
   return response.json();
 };

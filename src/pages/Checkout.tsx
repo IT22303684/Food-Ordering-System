@@ -7,9 +7,12 @@ import {
   getProfile,
   updateOrderStatus,
   assignDeliveryDriver,
+  getOrderById,
 } from "../utils/api";
 import { toast } from "react-toastify";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import Modal from "../components/Modal";
+import { FaMapMarkerAlt } from "react-icons/fa";
 
 interface Address {
   street: string;
@@ -30,6 +33,7 @@ const Checkout: React.FC = () => {
     [number, number] | null
   >(null);
   const [mapCenter, setMapCenter] = useState({ lat: 1.3143, lng: 103.7093 });
+  const [showNoDriversModal, setShowNoDriversModal] = useState(false);
 
   const [deliveryAddress, setDeliveryAddress] = useState<Address>({
     street: "",
@@ -108,6 +112,32 @@ const Checkout: React.FC = () => {
     }
   };
 
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newLocation: [number, number] = [
+            position.coords.latitude,
+            position.coords.longitude,
+          ];
+          setDeliveryLocation(newLocation);
+          setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+          toast.success("Location updated successfully");
+        },
+        (error) => {
+          toast.error("Failed to get location");
+          console.error("Geolocation error:", error);
+        }
+      );
+    } else {
+      toast.error("Geolocation is not supported by your browser");
+    }
+  };
+
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id) {
@@ -127,6 +157,8 @@ const Checkout: React.FC = () => {
 
     try {
       setLoading(true);
+
+      // First create the order
       const orderData = {
         userId: user.id,
         restaurantId: cartItems[0].restaurantId,
@@ -141,25 +173,106 @@ const Checkout: React.FC = () => {
       };
 
       const order = await createOrder(orderData);
+      console.log("Order created successfully:", order);
 
-      // Assign delivery driver
-      await assignDeliveryDriver(order._id, deliveryLocation);
+      // Verify the order exists and has an ID
+      if (!order || !order._id) {
+        throw new Error("Order creation failed - no order ID received");
+      }
 
-      if (paymentMethod === "CREDIT_CARD") {
-        await handleCreditCardPayment(order._id);
-      } else {
+      // Add a small delay to ensure order is processed
+      console.log("Waiting for order to be processed...");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Verify order exists in database
+      try {
+        const verifiedOrder = await getOrderById(order._id);
+        console.log("Order verified in database:", verifiedOrder);
+
+        if (!verifiedOrder) {
+          throw new Error("Order not found in database");
+        }
+      } catch (verifyError) {
+        console.error("Order verification error:", verifyError);
+        throw new Error("Failed to verify order in database");
+      }
+
+      // After verification, assign delivery driver using the order ID
+      console.log("Attempting to assign delivery driver for order:", order._id);
+      console.log("Delivery location:", deliveryLocation);
+
+      try {
+        // Format the location data properly - swap lat/lng for backend
+        const formattedLocation: [number, number] = [
+          deliveryLocation[0], // longitude
+          deliveryLocation[1], // latitude
+        ];
+
+        console.log("Formatted location for backend:", formattedLocation);
+        const deliveryResponse = await assignDeliveryDriver(
+          order._id,
+          formattedLocation
+        );
+        console.log("Delivery assignment response:", deliveryResponse);
+
+        if (
+          deliveryResponse.status === "error" &&
+          deliveryResponse.message === "No available drivers found in the area"
+        ) {
+          setShowNoDriversModal(true);
+          return;
+        }
+
+        if (deliveryResponse.status !== "success") {
+          throw new Error(
+            deliveryResponse.message || "Failed to assign delivery driver"
+          );
+        }
+
+        toast.success("Order placed successfully with delivery assigned!");
+
+        if (paymentMethod === "CREDIT_CARD") {
+          await handleCreditCardPayment(order._id);
+        } else {
+          await clearCartItems();
+          navigate("/orders");
+        }
+      } catch (deliveryError) {
+        console.error("Delivery assignment error:", deliveryError);
+        toast.warning(
+          "Order placed but delivery assignment failed. Please contact support."
+        );
         await clearCartItems();
-        toast.success("Order placed successfully!");
-        navigate("/orders");
+        navigate("/orders", {
+          state: {
+            message:
+              "Delivery assignment failed. Please contact support for assistance.",
+          },
+        });
       }
     } catch (error) {
-      console.error("Order creation error:", error);
+      console.error("Order process error:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to place order"
+        error instanceof Error ? error.message : "Failed to process order"
       );
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleNoDriversModalConfirm = async () => {
+    setShowNoDriversModal(false);
+    await clearCartItems();
+    navigate("/orders", {
+      state: {
+        message:
+          "No delivery drivers available. Please contact support for assistance.",
+      },
+    });
+  };
+
+  const handleNoDriversModalClose = () => {
+    setShowNoDriversModal(false);
   };
 
   return (
@@ -190,7 +303,16 @@ const Checkout: React.FC = () => {
 
         {/* Delivery Address and Location */}
         <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
-          <h2 className="text-xl font-semibold mb-4">Delivery Location</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Delivery Location</h2>
+            <button
+              onClick={getCurrentLocation}
+              className="flex items-center space-x-2 text-orange-500 hover:text-orange-600"
+            >
+              <FaMapMarkerAlt />
+              <span>Use Current Location</span>
+            </button>
+          </div>
 
           <div className="h-64 w-full rounded-lg overflow-hidden mb-4">
             <LoadScript
@@ -408,6 +530,16 @@ const Checkout: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={showNoDriversModal}
+        onClose={handleNoDriversModalClose}
+        onConfirm={handleNoDriversModalConfirm}
+        title="No Available Drivers"
+        message="No delivery drivers are currently available in your area. Your order has been placed, but delivery will be delayed. Please contact support for assistance."
+        confirmText="Continue to Orders"
+        cancelText="Stay on Page"
+      />
     </div>
   );
 };
