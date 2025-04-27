@@ -14,7 +14,26 @@ import {
   FaLocationArrow,
 } from "react-icons/fa";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
-import { completeDelivery, getCurrentDriver } from "../../utils/api";
+import {
+  completeDelivery,
+  getCurrentDriver,
+  getDeliveryStatus,
+} from "../../utils/api";
+
+interface DeliveryDetails {
+  orderId: string;
+  createdAt: string;
+  updatedAt: string;
+  status: string;
+  customerLocation: {
+    type: string;
+    coordinates: [number, number];
+  };
+  driverLocation: {
+    type: string;
+    coordinates: [number, number];
+  };
+}
 
 const DriverDashboard: React.FC = () => {
   const { driver, isAvailable, location, updateAvailability } = useDriver();
@@ -24,6 +43,11 @@ const DriverDashboard: React.FC = () => {
   const [currentLocation, setCurrentLocation] = useState<
     [number, number] | null
   >([1.3143, 103.7093]);
+  const [customerLocation, setCustomerLocation] = useState<
+    [number, number] | null
+  >(null);
+  const [deliveryDetails, setDeliveryDetails] =
+    useState<DeliveryDetails | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -142,6 +166,42 @@ const DriverDashboard: React.FC = () => {
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, [user?.id]);
+
+  // Fetch delivery details when currentDelivery changes
+  useEffect(() => {
+    const fetchDeliveryDetails = async () => {
+      if (driver?.currentDelivery) {
+        try {
+          const res = await getDeliveryStatus(driver.currentDelivery);
+          if (res?.data) {
+            setDeliveryDetails(res.data);
+            if (res.data.customerLocation?.coordinates) {
+              setCustomerLocation(res.data.customerLocation.coordinates);
+            } else {
+              setCustomerLocation(null);
+            }
+            if (res.data.driverLocation?.coordinates) {
+              setCurrentLocation(res.data.driverLocation.coordinates);
+              setMapCenter({
+                lat: res.data.driverLocation.coordinates[0],
+                lng: res.data.driverLocation.coordinates[1],
+              });
+            }
+          } else {
+            setDeliveryDetails(null);
+            setCustomerLocation(null);
+          }
+        } catch {
+          setDeliveryDetails(null);
+          setCustomerLocation(null);
+        }
+      } else {
+        setDeliveryDetails(null);
+        setCustomerLocation(null);
+      }
+    };
+    fetchDeliveryDetails();
+  }, [driver?.currentDelivery]);
 
   if (isLoading) {
     return (
@@ -272,6 +332,17 @@ const DriverDashboard: React.FC = () => {
                   }}
                 />
               )}
+              {customerLocation && (
+                <Marker
+                  position={{
+                    lat: customerLocation[0],
+                    lng: customerLocation[1],
+                  }}
+                  icon={{
+                    url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                  }}
+                />
+              )}
             </GoogleMap>
           </LoadScript>
         </div>
@@ -335,6 +406,33 @@ const DriverDashboard: React.FC = () => {
                   {driver.isAvailable ? "Available" : "On Delivery"}
                 </span>
               </p>
+              {deliveryDetails && (
+                <div className="mt-4">
+                  <p className="text-gray-600">
+                    <span className="font-medium">Order ID:</span>{" "}
+                    {deliveryDetails.orderId}
+                  </p>
+                  <p className="text-gray-600">
+                    <span className="font-medium">Created At:</span>{" "}
+                    {new Date(deliveryDetails.createdAt).toLocaleString()}
+                  </p>
+                  {customerLocation && (
+                    <div className="mt-4">
+                      <p className="text-gray-600">
+                        <span className="font-medium">Customer Location:</span>{" "}
+                        <a
+                          href={`https://www.google.com/maps/dir/?api=1&destination=${customerLocation[0]},${customerLocation[1]}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                        >
+                          Navigate to Customer
+                        </a>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           ) : (
             <p className="text-gray-600 text-center">
