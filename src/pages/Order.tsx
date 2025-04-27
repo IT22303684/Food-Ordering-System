@@ -10,7 +10,6 @@ import {
   FaCheckCircle,
   FaStar,
   FaBox,
-
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import {
@@ -110,6 +109,12 @@ const Order: React.FC = () => {
   const [driverDetails, setDriverDetails] = useState<DriverDetails | null>(
     null
   );
+  const [isTracking, setIsTracking] = useState(false);
+  const [driverMarker, setDriverMarker] = useState<google.maps.Marker | null>(
+    null
+  );
+  const [path, setPath] = useState<google.maps.Polyline | null>(null);
+  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
 
   useEffect(() => {
     const fetchOrderAndDeliveryDetails = async () => {
@@ -244,6 +249,84 @@ const Order: React.FC = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Function to handle track order button click
+  const handleTrackOrder = () => {
+    setIsTracking(true);
+    if (deliveryStatus?.data?.driverLocation?.coordinates) {
+      setMapCenter({
+        lat: deliveryStatus.data.driverLocation.coordinates[0],
+        lng: deliveryStatus.data.driverLocation.coordinates[1],
+      });
+    }
+  };
+
+  // Function to create bike icon
+  const getBikeIcon = () => {
+    if (!window.google) return undefined;
+    return {
+      url: "https://maps.google.com/mapfiles/ms/micons/motorcycling.png",
+      scaledSize: new window.google.maps.Size(32, 32),
+      anchor: new window.google.maps.Point(16, 16),
+    };
+  };
+
+  // Function to update driver location on map
+  const updateDriverLocation = () => {
+    if (deliveryStatus?.data?.driverLocation?.coordinates) {
+      const newLocation = {
+        lat: deliveryStatus.data.driverLocation.coordinates[0],
+        lng: deliveryStatus.data.driverLocation.coordinates[1],
+      };
+
+      setMapCenter(newLocation);
+
+      if (driverMarker) {
+        driverMarker.setPosition(newLocation);
+      }
+
+      // Update path if tracking is active
+      if (
+        isTracking &&
+        deliveryStatus.data.customerLocation?.coordinates &&
+        mapInstance
+      ) {
+        const pathCoordinates = [
+          newLocation,
+          {
+            lat: deliveryStatus.data.customerLocation.coordinates[0],
+            lng: deliveryStatus.data.customerLocation.coordinates[1],
+          },
+        ];
+
+        if (path) {
+          path.setPath(pathCoordinates);
+        } else {
+          const newPath = new window.google.maps.Polyline({
+            path: pathCoordinates,
+            geodesic: true,
+            strokeColor: "#FF0000",
+            strokeOpacity: 1.0,
+            strokeWeight: 2,
+          });
+          newPath.setMap(mapInstance);
+          setPath(newPath);
+        }
+      }
+    }
+  };
+
+  // Set up interval to update driver location when tracking
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isTracking) {
+      updateDriverLocation();
+      interval = setInterval(updateDriverLocation, 5000); // Update every 5 seconds
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isTracking, deliveryStatus?.data?.driverLocation]);
 
   if (isLoading) {
     return (
@@ -461,7 +544,6 @@ const Order: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
               </div>
             </div>
           )}
@@ -555,17 +637,22 @@ const Order: React.FC = () => {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-orange-500 text-white px-4 py-2 rounded-lg"
+              className={`px-4 py-2 rounded-lg ${
+                isTracking
+                  ? "bg-green-500 text-white"
+                  : "bg-orange-500 text-white"
+              }`}
+              onClick={handleTrackOrder}
             >
-              Track Order
+              {isTracking ? "Tracking Active" : "Track Order"}
             </motion.button>
           </div>
         </div>
 
-        {/* Map View (Placeholder) */}
+        {/* Map View */}
         <div className="bg-white rounded-lg shadow-md p-6 mt-6">
           <h2 className="text-xl font-semibold mb-4">Delivery Route</h2>
-          <div className="h-64 rounded-lg overflow-hidden">
+          <div className="h-96 rounded-lg overflow-hidden">
             <LoadScript
               googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
             >
@@ -580,6 +667,15 @@ const Order: React.FC = () => {
                   streetViewControl: true,
                   fullscreenControl: true,
                 }}
+                onLoad={(map) => {
+                  setMapInstance(map);
+                  if (deliveryStatus?.data?.driverLocation?.coordinates) {
+                    setMapCenter({
+                      lat: deliveryStatus.data.driverLocation.coordinates[0],
+                      lng: deliveryStatus.data.driverLocation.coordinates[1],
+                    });
+                  }
+                }}
               >
                 {deliveryStatus?.data?.driverLocation?.coordinates && (
                   <Marker
@@ -587,10 +683,9 @@ const Order: React.FC = () => {
                       lat: deliveryStatus.data.driverLocation.coordinates[0],
                       lng: deliveryStatus.data.driverLocation.coordinates[1],
                     }}
-                    icon={{
-                      url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                    }}
+                    icon={getBikeIcon()}
                     title="Driver Location"
+                    onLoad={(marker) => setDriverMarker(marker)}
                   />
                 )}
                 {deliveryStatus?.data?.customerLocation?.coordinates && (
@@ -608,6 +703,12 @@ const Order: React.FC = () => {
               </GoogleMap>
             </LoadScript>
           </div>
+          {isTracking && (
+            <div className="mt-4 text-center text-sm text-gray-600">
+              <FaClock className="inline-block mr-2" />
+              Tracking driver location...
+            </div>
+          )}
         </div>
       </div>
     </div>
