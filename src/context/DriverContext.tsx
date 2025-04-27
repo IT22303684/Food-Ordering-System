@@ -20,6 +20,12 @@ interface Driver {
     coordinates: [number, number];
   };
   isAvailable: boolean;
+  currentDelivery: string;
+  rating: number;
+  totalDeliveries: number;
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
 }
 
 interface Delivery {

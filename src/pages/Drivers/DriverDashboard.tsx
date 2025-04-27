@@ -14,6 +14,7 @@ import {
   FaLocationArrow,
 } from "react-icons/fa";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
+import { completeDelivery, getCurrentDriver } from "../../utils/api";
 
 const DriverDashboard: React.FC = () => {
   const { driver, isAvailable, location, updateAvailability } = useDriver();
@@ -46,7 +47,6 @@ const DriverDashboard: React.FC = () => {
           ];
           setCurrentLocation(newLocation);
           setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
-          toast.success("Location updated successfully");
         },
         (error) => {
           toast.error("Failed to get location");
@@ -73,6 +73,75 @@ const DriverDashboard: React.FC = () => {
       toast.error("Failed to update availability");
     }
   };
+
+  const handleCompleteDelivery = async () => {
+    try {
+      if (!driver?._id) {
+        toast.error("Driver ID not found");
+        return;
+      }
+
+      await completeDelivery(driver._id);
+      toast.success("Delivery completed successfully!");
+
+      // Refresh the page after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("Complete delivery error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to complete delivery"
+      );
+    }
+  };
+
+  // Function to fetch and update driver data
+  const fetchDriverData = async () => {
+    try {
+      if (!user?.id) return;
+
+      const response = await getCurrentDriver(user.id);
+      if (response.data) {
+        // Update the driver context with new data
+        // You might want to add an updateDriver function to your DriverContext
+        // For now, we'll just log the changes
+        console.log("Driver data updated:", response.data);
+
+        // Check for changes in delivery status
+        if (driver?.currentDelivery !== response.data.currentDelivery) {
+          if (response.data.currentDelivery) {
+            toast.info("New delivery assigned!");
+          } else {
+            toast.success("Delivery completed!");
+          }
+        }
+
+        // Check for changes in availability
+        if (driver?.isAvailable !== response.data.isAvailable) {
+          toast.info(
+            `You are now ${
+              response.data.isAvailable ? "available" : "unavailable"
+            } for deliveries`
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching driver data:", error);
+    }
+  };
+
+  // Set up polling interval
+  useEffect(() => {
+    // Initial fetch
+    fetchDriverData();
+
+    // Set up interval to fetch every 30 seconds
+    const intervalId = setInterval(fetchDriverData, 30000);
+
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
+  }, [user?.id]);
 
   if (isLoading) {
     return (
@@ -167,13 +236,13 @@ const DriverDashboard: React.FC = () => {
               </p>
             </div>
           </div>
-          <button
+          {/* <button
             onClick={getCurrentLocation}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center space-x-2"
           >
             <FaMapMarkerAlt />
             <span>Update Location</span>
-          </button>
+          </button> */}
         </div>
         <div className="h-64 w-full rounded-lg overflow-hidden">
           <LoadScript
@@ -250,20 +319,44 @@ const DriverDashboard: React.FC = () => {
           <h2 className="text-xl font-semibold">Active Delivery</h2>
         </div>
         <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-gray-600 text-center">
-            No active deliveries at the moment
-          </p>
+          {driver?.currentDelivery ? (
+            <div className="space-y-2">
+              <p className="text-gray-600">
+                <span className="font-medium">Delivery ID:</span>{" "}
+                {driver.currentDelivery}
+              </p>
+              <p className="text-gray-600">
+                <span className="font-medium">Status:</span>{" "}
+                <span
+                  className={
+                    driver.isAvailable ? "text-green-600" : "text-red-600"
+                  }
+                >
+                  {driver.isAvailable ? "Available" : "On Delivery"}
+                </span>
+              </p>
+            </div>
+          ) : (
+            <p className="text-gray-600 text-center">
+              No active deliveries at the moment
+            </p>
+          )}
         </div>
       </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button className="bg-white rounded-lg shadow-md p-4 flex items-center space-x-4 hover:bg-gray-50 transition-colors">
-          <div className="p-3 bg-green-100 rounded-full">
-            <FaCheckCircle className="text-green-500 text-2xl" />
-          </div>
-          <span className="font-medium">Complete Delivery</span>
-        </button>
+        {driver?.currentDelivery && (
+          <button
+            onClick={handleCompleteDelivery}
+            className="bg-white rounded-lg shadow-md p-4 flex items-center space-x-4 hover:bg-gray-50 transition-colors"
+          >
+            <div className="p-3 bg-green-100 rounded-full">
+              <FaCheckCircle className="text-green-500 text-2xl" />
+            </div>
+            <span className="font-medium">Complete Delivery</span>
+          </button>
+        )}
         <button className="bg-white rounded-lg shadow-md p-4 flex items-center space-x-4 hover:bg-gray-50 transition-colors">
           <div className="p-3 bg-yellow-100 rounded-full">
             <FaExclamationTriangle className="text-yellow-500 text-2xl" />
