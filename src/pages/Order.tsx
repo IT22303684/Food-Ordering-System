@@ -8,9 +8,16 @@ import {
   FaUser,
   FaArrowLeft,
   FaCheckCircle,
+  FaStar,
+  FaBox,
+
 } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { getOrderById, getDeliveryStatusbyOrderId } from "../utils/api";
+import {
+  getOrderById,
+  getDriverDetails,
+  getDeliveryStatusbyOrderId,
+} from "../utils/api";
 import { toast } from "react-toastify";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 
@@ -33,6 +40,23 @@ interface DeliveryStatus {
     updatedAt: string;
     actualDeliveryTime?: string;
   };
+}
+
+interface DriverDetails {
+  _id: string;
+  userId: string;
+  isAvailable: boolean;
+  currentDelivery: string;
+  vehicleType: string;
+  vehicleNumber: string;
+  rating: number;
+  totalDeliveries: number;
+  location: {
+    type: string;
+    coordinates: [number, number];
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface OrderStatus {
@@ -83,6 +107,9 @@ const Order: React.FC = () => {
   const [currentStatus, setCurrentStatus] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(true);
   const [mapCenter, setMapCenter] = useState({ lat: 5.9765, lng: 80.5188 });
+  const [driverDetails, setDriverDetails] = useState<DriverDetails | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchOrderAndDeliveryDetails = async () => {
@@ -138,6 +165,15 @@ const Order: React.FC = () => {
               lng: deliveryData.data.driverLocation.coordinates[1],
             });
           }
+        }
+
+        // Fetch driver details
+        const driverDetailsData = await getDriverDetails(
+          deliveryData.data.driverId
+        );
+        console.log("driverDetailsData", driverDetailsData);
+        if (driverDetailsData?.data) {
+          setDriverDetails(driverDetailsData.data);
         }
       } catch (error) {
         console.error("Error fetching details:", error);
@@ -373,6 +409,59 @@ const Order: React.FC = () => {
                     </p>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Driver Information Card */}
+          {driverDetails && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-xl font-semibold mb-4">Driver Information</h2>
+              <div className="space-y-4">
+                <div className="flex items-start">
+                  <FaUser className="text-orange-500 mt-1 mr-3" />
+                  <div>
+                    <h3 className="font-medium">Driver ID</h3>
+                    <p className="text-sm text-gray-500">{driverDetails._id}</p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <FaMotorcycle className="text-orange-500 mt-1 mr-3" />
+                  <div>
+                    <h3 className="font-medium">Vehicle Type</h3>
+                    <p className="text-sm text-gray-500">
+                      {driverDetails.vehicleType}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <FaMotorcycle className="text-orange-500 mt-1 mr-3" />
+                  <div>
+                    <h3 className="font-medium">Vehicle Number</h3>
+                    <p className="text-sm text-gray-500">
+                      {driverDetails.vehicleNumber}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <FaStar className="text-orange-500 mt-1 mr-3" />
+                  <div>
+                    <h3 className="font-medium">Rating</h3>
+                    <p className="text-sm text-gray-500">
+                      {driverDetails.rating || "Not rated yet"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start">
+                  <FaBox className="text-orange-500 mt-1 mr-3" />
+                  <div>
+                    <h3 className="font-medium">Total Deliveries</h3>
+                    <p className="text-sm text-gray-500">
+                      {driverDetails.totalDeliveries}
+                    </p>
+                  </div>
+                </div>
+                
               </div>
             </div>
           )}
