@@ -52,6 +52,15 @@ const Sidebar = ({ isSidebarOpen }: { isSidebarOpen: boolean }) => {
       ],
     },
     {
+      path: "/admin-dashboard/earnings",
+      title: "Earnings & Payments",
+      icon: <MdPayments />,
+      subItems: [
+        { path: "/admin-dashboard/earnings/earan", title: "Daily/Weekly Earnings" },
+        { path: "/admin-dashboard/earnings/payouts", title: "Payouts" },
+      ],
+    },
+    {
       path: "/admin-dashboard/promotions",
       title: "Promotions & Discounts",
       icon: <FiDivide />,
@@ -69,15 +78,7 @@ const Sidebar = ({ isSidebarOpen }: { isSidebarOpen: boolean }) => {
         { path: "/admin-dashboard/customers/loyalty", title: "Loyalty Programs" },
       ],
     },
-    {
-      path: "/admin-dashboard/earnings",
-      title: "Earnings & Payments",
-      icon: <MdPayments />,
-      subItems: [
-        { path: "/admin-dashboard/earnings/earan", title: "Daily/Weekly Earnings" },
-        { path: "/admin-dashboard/earnings/payouts", title: "Payouts" },
-      ],
-    },
+   
     {
       path: "/admin-dashboard/settings",
       title: "Business Settings",
