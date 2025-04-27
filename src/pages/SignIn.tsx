@@ -88,9 +88,12 @@ function SignIn() {
           lastName: response.user.lastName || "",
         });
       }
-      if (response.user.role == "RESTAURANT") {
+      
+      if(response.user.role == "RESTAURANT"){
         navigate("/resturent-dashboard");
-      } else {
+      }else if(response.user.role == "ADMIN"){
+        navigate("/admin-dashboard");
+      }else {
         navigate("/");
       }
 

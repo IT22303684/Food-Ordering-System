@@ -33,6 +33,7 @@ interface CartItem {
 }
 
 interface CartContextType {
+  cartId: string | null; // Added cartId
   cartItems: CartItem[];
   cartTotal: number;
   isCartOpen: boolean;
@@ -52,6 +53,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const [cartId, setCartId] = useState<string | null>(null); // Added cartId state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [cartTotal, setCartTotal] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -63,6 +65,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       fetchCart();
     } else {
       console.log("No user ID found");
+      setCartId(null);
       setCartItems([]);
       setCartTotal(0);
     }
@@ -102,6 +105,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         });
 
         console.log("Valid cart items:", validItems);
+        setCartId(cart._id); // Save cartId
         setCartItems(validItems);
         calculateTotal(validItems);
       } else {
@@ -122,16 +126,19 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
           });
 
           console.log("New cart created with valid items:", validItems);
+          setCartId(newCart._id); // Save cartId
           setCartItems(validItems);
           calculateTotal(validItems);
         } else {
           console.log("No valid items in new cart");
+          setCartId(null);
           setCartItems([]);
           setCartTotal(0);
         }
       }
     } catch (error) {
       console.error("Error in fetchCart:", error);
+      setCartId(null);
       setCartItems([]);
       setCartTotal(0);
     }
@@ -179,7 +186,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error("Menu item not found");
       }
 
-      console.log("Menu item details:", menuItem); // Add logging to see the response
+      console.log("Menu item details:", menuItem);
 
       const cartItem = {
         menuItemId: menuItem._id,
@@ -198,7 +205,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log("Adding item to cart:", {
         ...cartItem,
         userId: user.id,
-        token: token.substring(0, 10) + "...", // Only log part of the token for security
+        token: token.substring(0, 10) + "...",
       });
 
       await addToCart(user.id, cartItem);
@@ -229,7 +236,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       await updateCartItem(user.id, menuItemId, quantity);
-      await fetchCart(); // Refresh cart after update
+      await fetchCart();
       toast.success("Cart updated successfully");
     } catch (error) {
       console.error("Update quantity error:", error);
@@ -271,6 +278,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       await clearCart(user.id);
+      setCartId(null);
       setCartItems([]);
       setCartTotal(0);
       toast.success("Cart cleared");
@@ -285,6 +293,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <CartContext.Provider
       value={{
+        cartId, // Expose cartId
         cartItems,
         cartTotal,
         isCartOpen,

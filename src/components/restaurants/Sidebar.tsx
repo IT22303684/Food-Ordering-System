@@ -10,7 +10,7 @@ import {
   FiHome,
   FiSunset,
 } from "react-icons/fi";
-import { MdPayments, MdOutlinePowerSettingsNew } from "react-icons/md";
+import { MdPayments, MdOutlinePowerSettingsNew, MdOutlineRestaurantMenu  } from "react-icons/md";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
@@ -36,10 +36,12 @@ const menuItems: MenuItem[] = [
     icon: <FiSunset />,
     subItems: [
       { path: "/resturent-dashboard/orders/new", title: "New Orders" },
+      { path: "/resturent-dashboard/orders/confirme", title: "Confirme Order" },
       { path: "/resturent-dashboard/orders/preparing", title: "Preparing Orders" },
-      { path: "/resturent-dashboard/orders/ready", title: "Ready for Pickup" },
-      { path: "/resturent-dashboard/orders/completed", title: "Completed Orders" },
-      { path: "/resturent-dashboard/orders/canceled", title: "Canceled Orders" },
+      { path: "/resturent-dashboard/orders/ready", title: "Ready Orders" },   
+      { path: "/resturent-dashboard/orders/out-for-delivery", title: "Out For Delivery" },
+      { path: "/resturent-dashboard/orders/completed", title: "Complete Orders" },
+      { path: "/resturent-dashboard/orders/canceled", title: "Canceled Orders" },   
     ],
   },
   {
@@ -47,9 +49,18 @@ const menuItems: MenuItem[] = [
     title: "Menu Management",
     icon: <FiBook />,
     subItems: [
-      { path: "/resturent-dashboard/menu-management/all", title: "All Items" },
-      { path: "/resturent-dashboard/menu-management/add", title: "Add New Item" },
-      { path: "/resturent-dashboard/menu-management/categories", title: "Categories" },
+      { path: "/resturent-dashboard/menu-management/all", title: "All Menu Item" },
+      { path: "/resturent-dashboard/menu-management/manage", title: "Manage Menu Item" },
+      { path: "/resturent-dashboard/menu-management/add", title: "Add New Menu Item" },
+    ],
+  },
+  {
+    path: "/resturent-dashboard/category",
+    title: "Menu Category Management",
+    icon: <MdOutlineRestaurantMenu  />,
+    subItems: [
+      { path: "/resturent-dashboard/category/manage", title: "Manage Category" },
+      { path: "/resturent-dashboard/category/add", title: "Add New Category" },
     ],
   },
   {
@@ -121,7 +132,7 @@ interface SidebarProps {
 
 const Sidebar = ({ isSidebarOpen }: SidebarProps) => {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {

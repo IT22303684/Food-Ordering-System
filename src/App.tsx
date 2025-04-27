@@ -18,12 +18,17 @@ import Cart from "./pages/Cart";
 import ResturentRegister from "./pages/ResturentRegister";
 import Profile from "./pages/Profile";
 import DriverDashboard from "./pages/Drivers/DriverDashboard";
+import TermsAndConditions from "./pages/TermsAndConditions";
 
 //-------------- admin--------------------------------------
 import AdminLayout from "./pages/admin/AdminLayout";
 import AllResturent from "./pages/admin/AllResturent";
 import RequestResturent from "./pages/admin/RequestResturent";
 import AddResturent from "./pages/admin/AddResturent";
+import AllUsers from "./pages/admin/AllUsers";
+import UserPermissions from "./pages/admin/UserPermissions";
+import UserSetting from "./pages/admin/UserSetting";
+import AddUser from "./pages/admin/AddUser";
 
 const AdminRoutes = () => {
   return (
@@ -39,6 +44,14 @@ const AdminRoutes = () => {
           <Route path="request" element={<RequestResturent />} />
           <Route path="add" element={<AddResturent />} />
         </Route>
+        {/* user-related routes grouped under /orders */}
+        <Route path="user-management">
+          <Route path="all" element={<AllUsers />} />
+          <Route path="roles" element={<UserPermissions />} />
+          <Route path="add" element={<AddUser />} /> 
+          <Route path="settings" element={<UserSetting />} />
+        </Route>
+
         {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>
@@ -48,14 +61,19 @@ const AdminRoutes = () => {
 //-------------- resturent--------------------------------------
 import ResturentLayout from "./pages/restaurants/ResturentLayout";
 import Overview from "./pages/restaurants/Overview";
-import NewOrder from "./pages/restaurants/NewOrder";
-import PreparingOrder from "./pages/restaurants/PreparingOrder";
-import ReadyOrder from "./pages/restaurants/ReadyOrder";
-import CompleteOrder from "./pages/restaurants/CompleteOrder";
-import CancelledOrder from "./pages/restaurants/CanceledOrder";
-import AllItem from "./pages/restaurants/AllItem";
-import AddNewItem from "./pages/restaurants/AddNewItem";
 
+import PendingOrders from "./pages/restaurants/PendingOrders";
+import PreparingOrder from "./pages/restaurants/PreparingOrder";
+import CancelledOrder from "./pages/restaurants/CanceledOrder";
+import ConfirmedOrders from "./pages/restaurants/ConfirmedOrders";
+import ReadyOrders from "./pages/restaurants/ReadyOrders";
+import CompletedOrders from "./pages/restaurants/CompletedOrders";
+import OutForDeliveryOrders from "./pages/restaurants/OutForDeliveryOrders";
+import ManageMenuItems from "./pages/restaurants/ManageMenuItems";
+import AddNewMenuItem from "./pages/restaurants/AddNewMenuItem";
+import AllMenuItems from "./pages/restaurants/AllMenuItems";
+import AddCategories from "./pages/restaurants/AddCategories";
+import CategoryManagement from "./pages/restaurants/CategoryManagement";
 import FoodHomePage from "./pages/FoodHomePage";
 import Restaurant from "./pages/Restaurant";
 import ResturentProfile from "./pages/restaurants/ResturentProfile";
@@ -73,17 +91,25 @@ const ResturentRoutes = () => {
         <Route path="profile" element={<ResturentProfile />} />
         {/* Order-related routes grouped under /orders */}
         <Route path="orders">
-          <Route path="new" element={<NewOrder />} />
+          <Route path="new" element={<PendingOrders />} />
+          <Route path="confirme" element={<ConfirmedOrders />} />
           <Route path="preparing" element={<PreparingOrder />} />
-          <Route path="ready" element={<ReadyOrder />} />
-          <Route path="completed" element={<CompleteOrder />} />
+          <Route path="ready" element={<ReadyOrders />} />
+          <Route path="out-for-delivery" element={<OutForDeliveryOrders />} />
+          <Route path="completed" element={<CompletedOrders />} />
           <Route path="canceled" element={<CancelledOrder />} />
         </Route>
         {/* menu-related routes grouped under /menu-management */}
         <Route path="menu-management">
-          <Route path="all" element={<AllItem />} />
-          <Route path="add" element={<AddNewItem />} />
+          <Route path="all" element={<AllMenuItems />} />
+          <Route path="manage" element={<ManageMenuItems />} />
+          <Route path="add" element={<AddNewMenuItem />} />
         </Route>
+        {/* category-related routes grouped under /menu-management */}
+        <Route path="category">
+          <Route path="manage" element={<CategoryManagement />} />
+          <Route path="add" element={<AddCategories />} />
+        </Route> 
         {/* Add more routes as needed to match sidebar */}
       </Route>
     </Routes>

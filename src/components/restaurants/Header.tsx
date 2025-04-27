@@ -1,11 +1,12 @@
-import { FaMoon, FaSun } from "react-icons/fa";
+import { FaMoon, FaSun, FaPowerOff } from "react-icons/fa";
 import { HiOutlineMenuAlt2 } from "react-icons/hi";
 import { FiUser } from "react-icons/fi";
 import { MdOutlinePowerSettingsNew } from "react-icons/md";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
+import { getRestaurantById, updateRestaurantAvailability } from "@/utils/api";
 
 interface HeaderProps {
   toggleDarkMode: () => void;
@@ -17,6 +18,65 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [logo, setRestaurantLogo] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<boolean>(true);
+  const [isToggling, setIsToggling] = useState<boolean>(false);
+
+  // Fetch restaurant logo and availability
+  useEffect(() => {
+    const fetchRestaurant = async () => {
+      try {
+        if (!user || !user.id) {
+          throw new Error("User not authenticated or missing ID");
+        }
+        const response = await getRestaurantById(user.id);
+        if (!response) {
+          throw new Error("Restaurant data not found in response");
+        }
+        setRestaurantLogo(response.logo || null);
+        setAvailability(response.availability ?? true);
+      } catch (error: any) {
+        console.error('Failed to fetch restaurant data:', error);
+        toast.error(error.message || 'Failed to fetch restaurant data');
+        setRestaurantLogo(null);
+        setAvailability(true); // Fallback to default availability
+      }
+    };
+    if (isAuthenticated && user) {
+      fetchRestaurant();
+    }
+  }, [isAuthenticated, user]);
+
+  // Handle availability toggle with optimistic update
+  const handleToggleAvailability = async () => {
+    if (!isAuthenticated || !user) {
+      toast.error("You must be logged in to update availability.");
+      return;
+    }
+
+    setIsToggling(true);
+    // Optimistically update the UI
+    const previousAvailability = availability;
+    const newAvailability = !availability;
+    setAvailability(newAvailability);
+
+    try {
+      const response = await updateRestaurantAvailability(newAvailability);
+      if (!response) {
+        throw new Error("Restaurant data not found in response");
+      }
+      // Confirm server state (optional, since UI is already updated)
+      setAvailability(response.availability);
+      toast.success(`Restaurant is now ${newAvailability ? 'available' : 'unavailable'}.`);
+    } catch (error: any) {
+      // Revert to previous state on error
+      setAvailability(previousAvailability);
+      console.error('Toggle availability error:', error);
+      toast.error(error.message || 'Failed to update availability');
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   const handleLogout = async () => {
     if (!isAuthenticated) {
@@ -43,11 +103,8 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
 
   // Close dropdown when clicking outside
   const handleBlur = () => {
-    setTimeout(() => setIsDropdownOpen(false), 200); // Delay to allow click on dropdown items
+    setTimeout(() => setIsDropdownOpen(false), 200);
   };
-
-  // Define role constant (adjust based on your backend role naming)
-  const RESTAURANT_ROLE = "RESTAURANT";
 
   return (
     <>
@@ -63,20 +120,34 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
               >
                 <HiOutlineMenuAlt2 className="text-2xl" />
               </button>
-              <Link to="/resturent-dashboard/overview" className="flex ms-2 md:me-24">
-                {isAuthenticated &&
-                user?.role?.toUpperCase() === RESTAURANT_ROLE.toUpperCase() ? (
-                  <span className="self-center text-xl font-semibold sm:text-xl whitespace-nowrap dark:text-white">
-                    {user?.email || "Restaurant Dashboard"}
-                  </span>
-                ) : (
-                  <span className="self-center text-xl font-semibold sm:text-xl whitespace-nowrap dark:text-white">
-                    Restaurant Dashboard
-                  </span>
-                )}
+              <Link to="/resturent-dashboard/overview" className="flex items-center ms-2 md:me-24">
+                <img
+                  src={logo || '/images/default-logo.png'}
+                  alt="Restaurant Logo"
+                  className="h-8 w-8 rounded-full object-cover mr-2 shrink-0 border border-gray-200 dark:border-gray-600"
+                />
               </Link>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Availability Toggle Button */}
+              {isAuthenticated && user && (
+                <button
+                  onClick={handleToggleAvailability}
+                  disabled={isToggling}
+                  className={`flex items-center space-x-2 p-2 rounded-full ${
+                    availability
+                      ? 'bg-green-100 text-green-600 dark:bg-green-700 dark:text-green-200'
+                      : 'bg-red-100 text-red-600 dark:bg-red-700 dark:text-red-200'
+                  } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  aria-label={availability ? 'Set restaurant unavailable' : 'Set restaurant available'}
+                >
+                  <FaPowerOff className="text-lg" />
+                  <span className="text-sm font-medium">
+                    {isToggling ? 'Updating...' : availability ? 'Available' : 'Unavailable'}
+                  </span>
+                </button>
+              )}
+              {/* Dark Mode Toggle */}
               <button
                 onClick={toggleDarkMode}
                 className="dark:bg-slate-50 dark:text-slate-700 rounded-full p-2"
@@ -84,7 +155,8 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
               >
                 {darkMode ? <FaSun /> : <FaMoon className="text-gray-500" />}
               </button>
-              {isAuthenticated && (
+              {/* User Dropdown */}
+              {isAuthenticated && user && (
                 <div className="relative">
                   <button
                     onClick={toggleDropdown}
@@ -94,7 +166,7 @@ const Header = ({ toggleDarkMode, darkMode, toggleSidebar }: HeaderProps) => {
                   >
                     <FiUser className="text-xl" />
                     <span className="hidden sm:inline text-sm font-medium dark:text-white">
-                      {user?.email || "User"}
+                      {user.email || "User"}
                     </span>
                   </button>
                   {isDropdownOpen && (
