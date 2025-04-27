@@ -18,7 +18,9 @@ import {
   completeDelivery,
   getCurrentDriver,
   getDeliveryStatus,
+  getOrderById,
 } from "../../utils/api";
+import OrderDetailsModal from "../../components/OrderDetailsModal";
 
 interface DeliveryDetails {
   orderId: string;
@@ -35,6 +37,29 @@ interface DeliveryDetails {
   };
 }
 
+interface OrderDetails {
+  deliveryAddress: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  restaurantId: string;
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    totalPrice: number;
+  }>;
+  totalAmount: number;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const DriverDashboard: React.FC = () => {
   const { driver, isAvailable, location, updateAvailability } = useDriver();
   const { user } = useAuth();
@@ -48,6 +73,8 @@ const DriverDashboard: React.FC = () => {
   >(null);
   const [deliveryDetails, setDeliveryDetails] =
     useState<DeliveryDetails | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
 
   useEffect(() => {
     if (user?.id) {
@@ -202,6 +229,27 @@ const DriverDashboard: React.FC = () => {
     };
     fetchDeliveryDetails();
   }, [driver?.currentDelivery]);
+
+  const handleShowOrderDetails = async () => {
+    console.log("handleShowOrderDetails called");
+    if (deliveryDetails?.orderId) {
+      console.log("Order ID:", deliveryDetails.orderId);
+      try {
+        const res = await getOrderById(deliveryDetails.orderId);
+        console.log("Order details response:", res);
+        if (res) {
+          setOrderDetails(res);
+          setShowOrderDetails(true);
+          console.log("Modal should be open now");
+        }
+      } catch (error) {
+        console.error("Error fetching order details:", error);
+        toast.error("Failed to fetch order details");
+      }
+    } else {
+      console.log("No order ID found in deliveryDetails");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -416,21 +464,28 @@ const DriverDashboard: React.FC = () => {
                     <span className="font-medium">Created At:</span>{" "}
                     {new Date(deliveryDetails.createdAt).toLocaleString()}
                   </p>
-                  {customerLocation && (
-                    <div className="mt-4">
-                      <p className="text-gray-600">
-                        <span className="font-medium">Customer Location:</span>{" "}
-                        <a
-                          href={`https://www.google.com/maps/dir/?api=1&destination=${customerLocation[0]},${customerLocation[1]}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                        >
-                          Navigate to Customer
-                        </a>
-                      </p>
-                    </div>
-                  )}
+                  <button
+                    onClick={handleShowOrderDetails}
+                    className="mt-2 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 flex items-center space-x-2"
+                  >
+                    <FaBox />
+                    <span>View Order Details</span>
+                  </button>
+                </div>
+              )}
+              {customerLocation && (
+                <div className="mt-4">
+                  <p className="text-gray-600">
+                    <span className="font-medium">Customer Location:</span>{" "}
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${customerLocation[0]},${customerLocation[1]}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-500 hover:underline"
+                    >
+                      Navigate to Customer
+                    </a>
+                  </p>
                 </div>
               )}
             </div>
@@ -462,6 +517,43 @@ const DriverDashboard: React.FC = () => {
           <span className="font-medium">Report Issue</span>
         </button>
       </div>
+
+      {/* Order Details Modal */}
+      {orderDetails && (
+        <OrderDetailsModal
+          isOpen={showOrderDetails}
+          onClose={() => setShowOrderDetails(false)}
+          title="Order Details"
+        >
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">Delivery Address</h3>
+              <p>
+                {orderDetails.deliveryAddress.street},{" "}
+                {orderDetails.deliveryAddress.city},{" "}
+                {orderDetails.deliveryAddress.state}{" "}
+                {orderDetails.deliveryAddress.zipCode},{" "}
+                {orderDetails.deliveryAddress.country}
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Order Details</h3>
+              <p>Status: {orderDetails.status}</p>
+              <p>Total Amount: ${orderDetails.totalAmount.toFixed(2)}</p>
+            </div>
+            <div>
+              <h3 className="font-semibold mb-2">Items</h3>
+              <ul className="list-disc list-inside">
+                {orderDetails.items.map((item, index) => (
+                  <li key={index}>
+                    {item.name} - ${item.price.toFixed(2)} x {item.quantity}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </OrderDetailsModal>
+      )}
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg">
