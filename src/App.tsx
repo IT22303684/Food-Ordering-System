@@ -29,6 +29,7 @@ import AllUsers from "./pages/admin/AllUsers";
 import UserPermissions from "./pages/admin/UserPermissions";
 import UserSetting from "./pages/admin/UserSetting";
 import AddUser from "./pages/admin/AddUser";
+import Earnings from "./pages/admin/Earnings";
 
 const AdminRoutes = () => {
   return (
@@ -47,6 +48,14 @@ const AdminRoutes = () => {
         {/* user-related routes grouped under /orders */}
         <Route path="user-management">
           <Route path="all" element={<AllUsers />} />
+          <Route path="roles" element={<UserPermissions />} />
+          <Route path="add" element={<AddUser />} /> 
+          <Route path="settings" element={<UserSetting />} />
+        </Route>
+
+         {/* payment-related routes grouped under /orders */}
+         <Route path="earnings">
+          <Route path="earan" element={<Earnings />} />
           <Route path="roles" element={<UserPermissions />} />
           <Route path="add" element={<AddUser />} /> 
           <Route path="settings" element={<UserSetting />} />
