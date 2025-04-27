@@ -9,7 +9,9 @@ import {
 interface User {
   id: string;
   email: string;
-  role: "CUSTOMER" | "RESTAURANT" | "ADMIN";
+  firstName: string;
+  lastName: string;
+  role: "CUSTOMER" | "RESTAURANT" | "ADMIN" | "DELIVERY";
 }
 
 interface AuthContextType {
