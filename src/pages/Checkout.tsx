@@ -122,7 +122,7 @@ const Checkout: React.FC = () => {
           ];
           setDeliveryLocation(newLocation);
           setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
-          toast.success("Location updated successfully");
+         
         },
         (error) => {
           toast.error("Failed to get location");
@@ -536,7 +536,7 @@ const Checkout: React.FC = () => {
         onClose={handleNoDriversModalClose}
         onConfirm={handleNoDriversModalConfirm}
         title="No Available Drivers"
-        message="No delivery drivers are currently available in your area. Your order has been placed, but delivery will be delayed. Please contact support for assistance."
+        message="No delivery drivers are currently available in your area. You can place your order and wait for the driver to be assigned. Please contact support for assistance."
         confirmText="Continue to Orders"
         cancelText="Stay on Page"
       />

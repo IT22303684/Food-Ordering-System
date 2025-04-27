@@ -1217,3 +1217,27 @@ export const getDriverLocation = async (deliveryId: string) => {
   const response = await fetch(`${BASE_URL}/delivery/${deliveryId}/location`);
   return response.json();
 };
+
+export const getDeliveryStatusbyOrderId = async (orderId: string) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/delivery/order/${orderId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch delivery status");
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error("Get delivery status error:", error);
+    throw error;
+  }
+};
