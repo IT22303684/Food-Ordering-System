@@ -74,7 +74,7 @@ const Sidebar = ({ isSidebarOpen }: { isSidebarOpen: boolean }) => {
       title: "Earnings & Payments",
       icon: <MdPayments />,
       subItems: [
-        { path: "/admin-dashboard/earnings/daily", title: "Daily/Weekly Earnings" },
+        { path: "/admin-dashboard/earnings/earan", title: "Daily/Weekly Earnings" },
         { path: "/admin-dashboard/earnings/payouts", title: "Payouts" },
       ],
     },

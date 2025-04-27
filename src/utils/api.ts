@@ -1467,3 +1467,83 @@ export const initiatePayment = async (paymentData: PaymentData) => {
   }
 };
 
+export const getAllPayments = async (params: {
+  status?: string;
+  restaurantId?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  try {
+    const query = new URLSearchParams();
+    if (params.status) query.set("status", params.status);
+    if (params.restaurantId) query.set("restaurantId", params.restaurantId);
+    if (params.startDate) query.set("startDate", params.startDate);
+    if (params.endDate) query.set("endDate", params.endDate);
+    if (params.page) query.set("page", params.page.toString());
+    if (params.limit) query.set("limit", params.limit.toString());
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/payments/all?${query.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch payments");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Get all payments error:", error);
+    throw error;
+  }
+};
+
+export const refundPayment = async ({ paymentId, reason }: { paymentId: string; reason: string }) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No authentication token found");
+    }
+
+    const response = await fetch(`${BASE_URL}/payments/refund`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ paymentId, reason }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("Refund payment failed:", { status: response.status, data });
+      throw new Error(data.message || "Failed to refund payment");
+    }
+
+    // Normalize response to match frontend expectation
+    return {
+      success: data.success,
+      data: {
+        paymentId: data.paymentId,
+        paymentStatus: data.paymentStatus,
+        refundReason: reason,
+      },
+      message: data.message || "Payment refunded successfully",
+    };
+  } catch (error) {
+    console.error("Refund payment error:", error);
+    throw error;
+  }
+};
+
