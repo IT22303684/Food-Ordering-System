@@ -242,13 +242,19 @@ const Order: React.FC = () => {
   // Simulate status updates
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentStatus((prev) =>
-        prev < statuses.length - 1 ? prev + 1 : prev
-      );
+      setCurrentStatus((prev) => {
+        if (deliveryStatus?.data?.status === "PICKED_UP") {
+          return 3; // Stop at "Ready for Pickup" step
+        }
+        if (prev === 4 && deliveryStatus?.data?.status === "DELIVERED") {
+          return statuses.length - 1;
+        }
+        return prev < statuses.length - 1 ? prev + 1 : prev;
+      });
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [deliveryStatus?.data?.status]);
 
   // Function to handle track order button click
   const handleTrackOrder = () => {
