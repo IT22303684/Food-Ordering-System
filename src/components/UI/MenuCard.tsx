@@ -8,12 +8,11 @@ interface MenuItem {
   price: number;
   mainImage?: string;
   description?: string;
-  category?: string;
+  category?: string; // Category name
   isAvailable?: boolean;
   rating?: number;
 }
 
-// Animation variants for cards
 const cardVariants = {
   hidden: { opacity: 0, y: 40, scale: 0.95 },
   visible: (i: number) => ({
@@ -37,7 +36,7 @@ const cardVariants = {
 interface MenuCardProps {
   item: MenuItem;
   index: number;
-  restaurantId: string; // Add restaurantId prop
+  restaurantId: string;
 }
 
 const MenuCard: React.FC<MenuCardProps> = ({ item, index, restaurantId }) => {
@@ -52,10 +51,9 @@ const MenuCard: React.FC<MenuCardProps> = ({ item, index, restaurantId }) => {
         viewport={{ once: true, amount: 0.2 }}
         variants={cardVariants}
       >
-        {/* Image */}
         <div className="w-full sm:w-40 h-32 sm:h-auto flex-shrink-0 py-6 pl-2">
           <motion.img
-            src={item.mainImage || 'https://via.placeholder.com/160x120'}
+            src={item.mainImage || '/placeholder-item.jpg'}
             alt={item.name}
             className="w-full h-full object-cover"
             initial={{ scale: 0.95, opacity: 0.8 }}
@@ -63,21 +61,18 @@ const MenuCard: React.FC<MenuCardProps> = ({ item, index, restaurantId }) => {
             transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
           />
         </div>
-
-        {/* Details */}
         <div className="p-4 flex-1">
           <h3 className="text-lg font-semibold text-gray-900">{item.name}</h3>
           {item.description && (
-            <p className="text-sm text-gary-900 mt-1 line-clamp-2">{item.description}</p>
+            <p className="text-sm text-gray-600 mt-1 line-clamp-2">{item.description}</p>
           )}
           {item.category && (
-            <p className="text-sm text-gary-900 mt-1 line-clamp-2">
-              Category: <label className="font-bold">{item.category}</label>
+            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+              Category: <span className="font-bold">{item.category}</span>
             </p>
           )}
           <div className="flex flex-row gap-6 pt-2">
             <p className="text-sm text-gray-600 mt-1">Rs. {item.price.toFixed(2)}</p>
-            {/* Prevent "Quick Add" click from navigating */}
             <div onClick={(e) => e.stopPropagation()}>
               <button className="text-sm text-orange-600 pt-1 font-bold py-1 px-3 hover:bg-orange-600 hover:text-white hover:translate-x-2">
                 Quick Add

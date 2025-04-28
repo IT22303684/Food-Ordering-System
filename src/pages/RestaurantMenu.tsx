@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { FaPhoneSquareAlt, FaSearch } from 'react-icons/fa';
 import MenuCard from '../components/UI/MenuCard';
-import { getMenuItemsByRestaurantId, getRestaurantById } from '../utils/api';
+import { getMenuItemsByRestaurantId, getRestaurantById, getCategoryById } from '../utils/api';
 
 interface MenuItem {
   _id: string;
@@ -10,12 +10,19 @@ interface MenuItem {
   price: number;
   mainImage?: string;
   description?: string;
-  category?: string;
+  category?: string; // categoryId
   isAvailable?: boolean;
 }
 
+interface Category {
+  _id: string;
+  name: string;
+  description?: string;
+}
+
 interface MenuSection {
-  section: string;
+  section: string; // Category name
+  categoryId: string; // Category ID
   items: MenuItem[];
 }
 
@@ -43,43 +50,67 @@ const RestaurantMenu: React.FC = () => {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
-  const [selectedCategory, setSelectedCategory] = useState<string>('All'); // State for category filter
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
   useEffect(() => {
     const fetchData = async () => {
       if (!restaurantId) return;
 
       try {
-        setLoading(true);
+        // Fetch all data concurrently
+        const [restaurantResponse, menuItemsResponse] = await Promise.all([
+          getRestaurantById(restaurantId),
+          getMenuItemsByRestaurantId(restaurantId),
+        ]);
 
-        // Fetch restaurant details
-        const restaurantData = await getRestaurantById(restaurantId);
-        setRestaurant(restaurantData);
+        const restaurantData = restaurantResponse.data || restaurantResponse;
+        const menuItems = menuItemsResponse.data || menuItemsResponse;
 
-        // Fetch menu items
-        const menuItems = await getMenuItemsByRestaurantId(restaurantId);
+        // Fetch unique categories
+        const categoryIds: string[] = Array.from(
+          new Set(
+            menuItems
+              .map((item: MenuItem) => item.category)
+              .filter((category: string | undefined): category is string => !!category)
+          )
+        );
+        const categoryPromises = categoryIds.map((categoryId) =>
+          getCategoryById(restaurantId, categoryId).catch((err) => {
+            console.error(`Failed to fetch category ${categoryId}:`, err);
+            return null;
+          })
+        );
+        const categories = (await Promise.all(categoryPromises)).filter((cat) => cat !== null) as Category[];
+        const categoriesMap = categories.reduce((acc, category) => {
+          acc[category._id] = category;
+          return acc;
+        }, {} as { [key: string]: Category });
 
         // Group menu items by category
         const groupedItems: { [key: string]: MenuItem[] } = {};
         menuItems.forEach((item: MenuItem) => {
-          const category = item.category || 'Menu';
-          if (!groupedItems[category]) {
-            groupedItems[category] = [];
+          const categoryId = item.category || 'uncategorized';
+          if (!groupedItems[categoryId]) {
+            groupedItems[categoryId] = [];
           }
-          groupedItems[category].push(item);
+          groupedItems[categoryId].push(item);
         });
 
         // Convert grouped items to menu sections
-        const sections: MenuSection[] = Object.keys(groupedItems).map((category) => ({
-          section: category,
-          items: groupedItems[category],
+        const sections: MenuSection[] = Object.keys(groupedItems).map((categoryId) => ({
+          section: categoriesMap[categoryId]?.name || 'Menu',
+          categoryId,
+          items: groupedItems[categoryId],
         }));
 
+        // Update state once with all data
+        setRestaurant(restaurantData);
         setMenuSections(sections);
-        setFilteredMenuSections(sections); // Initialize filtered sections
+        setFilteredMenuSections(sections);
         setError(null);
       } catch (err: any) {
+        console.error('Fetch data error:', err);
         setError(err.message || 'Failed to load data');
       } finally {
         setLoading(false);
@@ -91,9 +122,11 @@ const RestaurantMenu: React.FC = () => {
 
   // Compute unique categories for the filter dropdown
   const categories = useMemo(() => {
-    const uniqueCategories = new Set<string>();
-    menuSections.forEach((section) => uniqueCategories.add(section.section));
-    return ['All', ...Array.from(uniqueCategories)];
+    const uniqueCategories = menuSections.map((section) => ({
+      id: section.categoryId,
+      name: section.section,
+    }));
+    return [{ id: 'all', name: 'All' }, ...uniqueCategories];
   }, [menuSections]);
 
   // Handle search and filter logic
@@ -105,6 +138,7 @@ const RestaurantMenu: React.FC = () => {
       filtered = filtered
         .map((section) => ({
           section: section.section,
+          categoryId: section.categoryId,
           items: section.items.filter((item) =>
             item.name.toLowerCase().includes(searchQuery.toLowerCase())
           ),
@@ -124,12 +158,20 @@ const RestaurantMenu: React.FC = () => {
     return <div className="text-center py-8 text-red-500">Restaurant ID not provided.</div>;
   }
 
+  if (loading) {
+    return <div className="text-center py-8">Loading menu...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-8 text-red-500">{error}</div>;
+  }
+
   return (
     <div className="w-full bg-white min-h-screen flex flex-col">
       {/* Banner Section */}
       <div className="w-full h-64 bg-black flex items-center justify-center relative">
         <img
-          src={restaurant?.exteriorPhoto || 'https://via.placeholder.com/1200x300'}
+          src={restaurant?.exteriorPhoto || '/placeholder-banner.jpg'}
           alt="Restaurant banner background"
           className="absolute left-0 top-0 w-full h-full object-cover opacity-70"
         />
@@ -165,26 +207,29 @@ const RestaurantMenu: React.FC = () => {
               className="p-3 w-fit rounded-xl focus:outline-none bg-gray-50 focus:ring-2 focus:ring-orange-500"
             >
               {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+                <option key={category.id} value={category.name}>
+                  {category.name}
                 </option>
               ))}
             </select>
-            
           </div>
 
           {/* Menu Items */}
-          {loading ? (
-            <div className="text-center py-8">Loading menu...</div>
-          ) : error ? (
-            <div className="text-center py-8 text-red-500">{error}</div>
-          ) : filteredMenuSections.length > 0 ? (
+          {filteredMenuSections.length > 0 ? (
             filteredMenuSections.map((section) => (
-              <div key={section.section}>
+              <div key={section.categoryId}>
                 <h2 className="text-2xl font-bold mb-4">{section.section}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
                   {section.items.map((item, i) => (
-                    <MenuCard key={item._id} item={item} restaurantId={restaurantId} index={i} />
+                    <MenuCard
+                      key={item._id}
+                      item={{
+                        ...item,
+                        category: section.section, // Use section name directly
+                      }}
+                      restaurantId={restaurantId}
+                      index={i}
+                    />
                   ))}
                 </div>
               </div>
@@ -214,7 +259,6 @@ const RestaurantInfo: React.FC<RestaurantInfoProps> = ({ restaurant }) => {
 
   return (
     <div className="grid grid-cols-1 gap-4 my-8 bg-white">
-      {/* Delivery Information */}
       <div className="bg-white p-4 rounded">
         <div className="font-bold text-orange-600 mb-2">Delivery Information</div>
         <div>{address}</div>
@@ -222,8 +266,6 @@ const RestaurantInfo: React.FC<RestaurantInfoProps> = ({ restaurant }) => {
         <div className="mt-2">{restaurant.operatingHours || 'Not available'}</div>
       </div>
       <hr />
-
-      {/* Contact Information */}
       <div className="bg-white p-4 rounded">
         <div className="font-bold text-orange-600 mb-2">Contact Information</div>
         <div>If you have changes or delivery issues, please contact us directly.</div>
@@ -233,8 +275,6 @@ const RestaurantInfo: React.FC<RestaurantInfoProps> = ({ restaurant }) => {
         </div>
       </div>
       <hr />
-
-      {/* Operational Times */}
       <div className="bg-white p-4 rounded">
         <div className="font-bold text-orange-600 mb-2">Operational Times</div>
         <div>{restaurant.operatingHours || 'Not available'}</div>

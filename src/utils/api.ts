@@ -888,6 +888,30 @@ export const deleteCategory = async (restaurantId: string, categoryId: string) =
   }
 };
 
+// Get category by ID (public)
+// Get category by ID (public)
+export const getCategoryById = async (restaurantId: string, categoryId: string) => {
+  try {
+    const response = await fetch(`${BASE_URL}/restaurants/${restaurantId}/categories/${categoryId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to fetch category");
+    }
+
+    const data = await response.json();
+    return data.data; // Extract data field
+  } catch (error) {
+    console.error("Fetch category by ID error:", error);
+    throw error;
+  }
+};
+
 //--------------------------- Cart APIs -------------------
 
 interface CartItem {
