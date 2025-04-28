@@ -6,6 +6,7 @@ import {
   createOrder,
   getProfile,
   updateOrderStatus,
+  initiatePayment,
   assignDeliveryDriver,
   getOrderById,
 } from "../utils/api";
@@ -24,17 +25,18 @@ interface Address {
 
 const Checkout: React.FC = () => {
   const navigate = useNavigate();
-  const { cartItems, cartTotal, clearCartItems } = useCart();
+  const { cartId, cartItems, cartTotal, clearCartItems } = useCart();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showNewAddress, setShowNewAddress] = useState(false);
+  const [showCardDetails, setShowCardDetails] = useState(false);
   const [defaultAddress, setDefaultAddress] = useState<Address | null>(null);
   const [deliveryLocation, setDeliveryLocation] = useState<
     [number, number] | null
   >(null);
   const [mapCenter, setMapCenter] = useState({ lat: 1.3143, lng: 103.7093 });
   const [showNoDriversModal, setShowNoDriversModal] = useState(false);
-
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState<Address>({
     street: "",
     city: "",
@@ -42,10 +44,15 @@ const Checkout: React.FC = () => {
     zipCode: "",
     country: "Sri Lanka",
   });
-
   const [paymentMethod, setPaymentMethod] = useState<
-    "CREDIT_CARD" | "CASH" | "ONLINE"
+    "CREDIT_CARD" | "DEBIT_CARD" | "CASH" | "ONLINE"
   >("CREDIT_CARD");
+  const [cardDetails, setCardDetails] = useState({
+    cardNumber: "",
+    cardHolderName: "",
+    expiryDate: "",
+    cvv: "",
+  });
 
   useEffect(() => {
     const fetchDefaultAddress = async () => {
@@ -69,6 +76,42 @@ const Checkout: React.FC = () => {
     }
   }, [user?.id]);
 
+  useEffect(() => {
+    if (paymentMethod !== "CREDIT_CARD" && paymentMethod !== "DEBIT_CARD") {
+      setShowCardDetails(false);
+      setCardDetails({
+        cardNumber: "",
+        cardHolderName: "",
+        expiryDate: "",
+        cvv: "",
+      });
+    }
+  }, [paymentMethod]);
+
+  useEffect(() => {
+    const getCurrentLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const newLocation: [number, number] = [
+              position.coords.latitude,
+              position.coords.longitude,
+            ];
+            setDeliveryLocation(newLocation);
+            setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+          },
+          (error) => {
+            toast.error("Failed to get location");
+            console.error("Geolocation error:", error);
+          }
+        );
+      } else {
+        toast.error("Geolocation is not supported by your browser");
+      }
+    };
+    getCurrentLocation();
+  }, []);
+
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setDeliveryAddress((prev) => ({
@@ -77,31 +120,12 @@ const Checkout: React.FC = () => {
     }));
   };
 
-  const handleCreditCardPayment = async (orderId: string) => {
-    try {
-      // Here you would integrate with your payment service provider
-      // For example, using Stripe:
-      // const stripe = await loadStripe('your_publishable_key');
-      // const { error } = await stripe.redirectToCheckout({
-      //   sessionId: 'your_session_id'
-      // });
-
-      // For demo purposes, we'll simulate a successful payment
-      const paymentSuccess = true; // Replace with actual payment processing
-
-      if (paymentSuccess) {
-        // Update order status to CONFIRMED after successful payment
-        await updateOrderStatus(orderId, "CONFIRMED");
-        await clearCartItems();
-        toast.success("Payment successful!");
-        navigate("/orders");
-      } else {
-        throw new Error("Payment failed");
-      }
-    } catch (error) {
-      console.error("Payment error:", error);
-      toast.error(error instanceof Error ? error.message : "Payment failed");
-    }
+  const handleCardDetailsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCardDetails((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
@@ -112,31 +136,93 @@ const Checkout: React.FC = () => {
     }
   };
 
-  const getCurrentLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const newLocation: [number, number] = [
-            position.coords.latitude,
-            position.coords.longitude,
-          ];
-          setDeliveryLocation(newLocation);
-          setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
-         
+  const handleCardPayment = async (orderId: string, cartId: string) => {
+    try {
+      if (
+        !cardDetails.cardNumber ||
+        !cardDetails.cardHolderName ||
+        !cardDetails.expiryDate ||
+        !cardDetails.cvv
+      ) {
+        throw new Error("Please fill in all card details");
+      }
+
+      if (!/^\d{16}$/.test(cardDetails.cardNumber.replace(/\s/g, ""))) {
+        throw new Error("Invalid card number");
+      }
+      if (!/^\d{2}\/\d{2}$/.test(cardDetails.expiryDate)) {
+        throw new Error("Invalid expiry date (MM/YY)");
+      }
+      if (!/^\d{3,4}$/.test(cardDetails.cvv)) {
+        throw new Error("Invalid CVV");
+      }
+
+      const paymentData = {
+        userId: user!.id,
+        cartId,
+        orderId,
+        restaurantId: cartItems[0].restaurantId,
+        items: cartItems.map((item) => ({
+          menuItemId: item.menuItemId,
+          restaurantId: item.restaurantId,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          totalPrice: item.price * item.quantity,
+        })),
+        totalAmount: cartTotal,
+        paymentMethod: paymentMethod as "CREDIT_CARD" | "DEBIT_CARD",
+        cardDetails: {
+          cardNumber: cardDetails.cardNumber,
+          cardHolderName: cardDetails.cardHolderName,
         },
-        (error) => {
-          toast.error("Failed to get location");
-          console.error("Geolocation error:", error);
-        }
-      );
-    } else {
-      toast.error("Geolocation is not supported by your browser");
+      };
+
+      const response = await initiatePayment(paymentData);
+      const { data } = response;
+      const { payherePayload, hash } = data;
+
+      console.log("PayHere Payload:", payherePayload);
+      console.log("PayHere Hash:", hash);
+
+      if (
+        !payherePayload.merchant_id ||
+        !payherePayload.order_id ||
+        !payherePayload.amount ||
+        !payherePayload.currency
+      ) {
+        throw new Error("Invalid PayHere payload: Missing required fields");
+      }
+      if (!hash) {
+        throw new Error("Invalid PayHere hash: Hash is missing");
+      }
+
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "https://sandbox.payhere.lk/pay/checkout";
+
+      Object.keys(payherePayload).forEach((key) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = payherePayload[key];
+        form.appendChild(input);
+      });
+
+      const hashInput = document.createElement("input");
+      hashInput.type = "hidden";
+      hashInput.name = "hash";
+      hashInput.value = hash;
+      form.appendChild(hashInput);
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error(error instanceof Error ? error.message : "Payment failed");
+      throw error;
     }
   };
-
-  useEffect(() => {
-    getCurrentLocation();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,10 +241,34 @@ const Checkout: React.FC = () => {
       return;
     }
 
+    if (Object.values(deliveryAddress).some((value) => !value)) {
+      toast.error("Please fill in all address fields");
+      return;
+    }
+
+    if (
+      (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") &&
+      !cartId
+    ) {
+      toast.error("Cart not found. Please add items to cart.");
+      return;
+    }
+
+    if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
+      if (!showCardDetails) {
+        console.log("Showing card details form");
+        setShowCardDetails(true);
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       setLoading(true);
 
-      // First create the order
+      const orderPaymentMethod =
+        paymentMethod === "DEBIT_CARD" ? "CREDIT_CARD" : paymentMethod;
+
       const orderData = {
         userId: user.id,
         restaurantId: cartItems[0].restaurantId,
@@ -169,57 +279,46 @@ const Checkout: React.FC = () => {
           quantity: item.quantity,
         })),
         deliveryAddress,
-        paymentMethod,
+        paymentMethod: orderPaymentMethod as "CREDIT_CARD" | "CASH" | "ONLINE",
       };
 
+      console.log("Creating order with data:", orderData);
       const order = await createOrder(orderData);
-      console.log("Order created successfully:", order);
+      console.log("Order created:", order);
 
-      // Verify the order exists and has an ID
       if (!order || !order._id) {
         throw new Error("Order creation failed - no order ID received");
       }
 
-      // Add a small delay to ensure order is processed
-      console.log("Waiting for order to be processed...");
+      // Verify order
       await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Verify order exists in database
-      try {
-        const verifiedOrder = await getOrderById(order._id);
-        console.log("Order verified in database:", verifiedOrder);
-
-        if (!verifiedOrder) {
-          throw new Error("Order not found in database");
-        }
-      } catch (verifyError) {
-        console.error("Order verification error:", verifyError);
-        throw new Error("Failed to verify order in database");
+      const verifiedOrder = await getOrderById(order._id);
+      console.log("Verified order:", verifiedOrder);
+      if (!verifiedOrder) {
+        throw new Error("Order not found in database");
       }
 
-      // After verification, assign delivery driver using the order ID
-      console.log("Attempting to assign delivery driver for order:", order._id);
-      console.log("Delivery location:", deliveryLocation);
-
+      // Assign delivery driver
       try {
-        // Format the location data properly - swap lat/lng for backend
         const formattedLocation: [number, number] = [
-          deliveryLocation[0], // longitude
-          deliveryLocation[1], // latitude
+          deliveryLocation[0],
+          deliveryLocation[1],
         ];
-
-        console.log("Formatted location for backend:", formattedLocation);
+        console.log("Assigning driver for order:", order._id, "Location:", formattedLocation);
         const deliveryResponse = await assignDeliveryDriver(
           order._id,
           formattedLocation
         );
-        console.log("Delivery assignment response:", deliveryResponse);
+        console.log("Delivery response:", deliveryResponse);
 
         if (
           deliveryResponse.status === "error" &&
           deliveryResponse.message === "No available drivers found in the area"
         ) {
+          console.log("No drivers found, setting pendingOrderId:", order._id);
+          setPendingOrderId(order._id);
           setShowNoDriversModal(true);
+          setLoading(false);
           return;
         }
 
@@ -229,50 +328,74 @@ const Checkout: React.FC = () => {
           );
         }
 
-        toast.success("Order placed successfully with delivery assigned!");
-
-        if (paymentMethod === "CREDIT_CARD") {
-          await handleCreditCardPayment(order._id);
+        // Proceed with payment or order confirmation
+        console.log("Driver assigned, proceeding with payment. Payment method:", paymentMethod);
+        if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
+          console.log("Initiating card payment for order:", order._id);
+          await handleCardPayment(order._id, cartId!);
         } else {
+          console.log("Confirming non-card order:", order._id);
+          await updateOrderStatus(order._id, "CONFIRMED");
           await clearCartItems();
+          toast.success("Order placed successfully!");
           navigate("/orders");
         }
       } catch (deliveryError) {
         console.error("Delivery assignment error:", deliveryError);
-        toast.warning(
-          "Order placed but delivery assignment failed. Please contact support."
-        );
-        await clearCartItems();
-        navigate("/orders", {
-          state: {
-            message:
-              "Delivery assignment failed. Please contact support for assistance.",
-          },
-        });
+        console.log("Setting pendingOrderId in catch:", order._id);
+        setPendingOrderId(order._id);
+        setShowNoDriversModal(true);
+        setLoading(false);
       }
     } catch (error) {
-      console.error("Order process error:", error);
+      console.error("Order creation error:", error);
       toast.error(
-        error instanceof Error ? error.message : "Failed to process order"
+        error instanceof Error ? error.message : "Failed to place order"
       );
-    } finally {
       setLoading(false);
     }
   };
 
   const handleNoDriversModalConfirm = async () => {
+    console.log("Modal confirm, pendingOrderId:", pendingOrderId);
     setShowNoDriversModal(false);
-    await clearCartItems();
-    navigate("/orders", {
-      state: {
-        message:
-          "No delivery drivers available. Please contact support for assistance.",
-      },
-    });
+    if (!pendingOrderId) {
+      console.log("No pending order found");
+      toast.error("No pending order found");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
+        console.log("Card payment, showCardDetails:", showCardDetails);
+        if (!showCardDetails) {
+          setShowCardDetails(true);
+          setLoading(false);
+        } else {
+          console.log("Initiating card payment for order:", pendingOrderId);
+          await handleCardPayment(pendingOrderId, cartId!);
+        }
+      } else {
+        console.log("Non-card payment, confirming order:", pendingOrderId);
+        await updateOrderStatus(pendingOrderId, "CONFIRMED");
+        await clearCartItems();
+        toast.success("Order placed successfully!");
+        navigate("/orders");
+      }
+    } catch (error) {
+      console.error("Post-modal processing error:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to process order"
+      );
+      setLoading(false);
+    }
   };
 
   const handleNoDriversModalClose = () => {
+    console.log("Modal close, keeping pendingOrderId:", pendingOrderId);
     setShowNoDriversModal(false);
+    setLoading(false);
   };
 
   return (
@@ -301,12 +424,31 @@ const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* Delivery Address and Location */}
+        {/* Delivery Address and Payment Form */}
         <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Delivery Location</h2>
             <button
-              onClick={getCurrentLocation}
+              onClick={() => {
+                if (navigator.geolocation) {
+                  navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                      const newLocation: [number, number] = [
+                        position.coords.latitude,
+                        position.coords.longitude,
+                      ];
+                      setDeliveryLocation(newLocation);
+                      setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+                    },
+                    (error) => {
+                      toast.error("Failed to get location");
+                      console.error("Geolocation error:", error);
+                    }
+                  );
+                } else {
+                  toast.error("Geolocation is not supported by your browser");
+                }
+              }}
               className="flex items-center space-x-2 text-orange-500 hover:text-orange-600"
             >
               <FaMapMarkerAlt />
@@ -363,171 +505,244 @@ const Checkout: React.FC = () => {
             </div>
           )}
 
-          {/* Delivery Address Form */}
-          <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
-            <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
+          <h2 className="text-xl font-semibold mb-4 mt-6">Delivery Address</h2>
 
-            {defaultAddress && (
-              <div className="mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <h3 className="font-medium text-gray-700 mb-2">
-                    Default Address
-                  </h3>
-                  <p className="text-gray-600">{defaultAddress.street}</p>
-                  <p className="text-gray-600">
-                    {defaultAddress.city}, {defaultAddress.state}{" "}
-                    {defaultAddress.zipCode}
-                  </p>
-                  <p className="text-gray-600">{defaultAddress.country}</p>
+          {defaultAddress && (
+            <div className="mb-6">
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h3 className="font-medium text-gray-700 mb-2">
+                  Default Address
+                </h3>
+                <p className="text-gray-600">{defaultAddress.street}</p>
+                <p className="text-gray-600">
+                  {defaultAddress.city}, {defaultAddress.state}{" "}
+                  {defaultAddress.zipCode}
+                </p>
+                <p className="text-gray-600">{defaultAddress.country}</p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowNewAddress(!showNewAddress)}
+                className="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center gap-2"
+              >
+                {showNewAddress ? (
+                  <>
+                    <span>Use Default Address</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 15l7-7 7 7"
+                      />
+                    </svg>
+                  </>
+                ) : (
+                  <>
+                    <span>Use Different Address</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {showNewAddress && (
+              <div className="space-y-4 max-h-[400px] overflow-y-auto">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Street
+                  </label>
+                  <input
+                    type="text"
+                    name="street"
+                    value={deliveryAddress.street}
+                    onChange={handleAddressChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                    required
+                  />
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowNewAddress(!showNewAddress)}
-                  className="text-orange-500 hover:text-orange-600 font-medium text-sm flex items-center gap-2"
-                >
-                  {showNewAddress ? (
-                    <>
-                      <span>Use Default Address</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 15l7-7 7 7"
-                        />
-                      </svg>
-                    </>
-                  ) : (
-                    <>
-                      <span>Use Different Address</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </>
-                  )}
-                </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={deliveryAddress.city}
+                    onChange={handleAddressChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    State
+                  </label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={deliveryAddress.state}
+                    onChange={handleAddressChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Zip Code
+                  </label>
+                  <input
+                    type="text"
+                    name="zipCode"
+                    value={deliveryAddress.zipCode}
+                    onChange={handleAddressChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Country
+                  </label>
+                  <input
+                    type="text"
+                    name="country"
+                    value={deliveryAddress.country}
+                    onChange={handleAddressChange}
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                    required
+                    disabled
+                  />
+                </div>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {showNewAddress && (
-                <div className="space-y-4 max-h-[400px] overflow-y-auto">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Payment Method
+              </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) =>
+                  setPaymentMethod(
+                    e.target.value as
+                      | "CREDIT_CARD"
+                      | "DEBIT_CARD"
+                      | "CASH"
+                      | "ONLINE"
+                  )
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                disabled={showCardDetails}
+              >
+                <option value="CREDIT_CARD">Credit Card</option>
+                <option value="DEBIT_CARD">Debit Card</option>
+                <option value="CASH">Cash on Delivery</option>
+                <option value="ONLINE">Online Payment</option>
+              </select>
+            </div>
+
+            {(paymentMethod === "CREDIT_CARD" ||
+              paymentMethod === "DEBIT_CARD") &&
+              showCardDetails && (
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Street
+                      Card Number
                     </label>
                     <input
                       type="text"
-                      name="street"
-                      value={deliveryAddress.street}
-                      onChange={handleAddressChange}
+                      name="cardNumber"
+                      value={cardDetails.cardNumber}
+                      onChange={handleCardDetailsChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
                       required
+                      placeholder="1234 5678 1234 5678"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      City
+                      Cardholder Name
                     </label>
                     <input
                       type="text"
-                      name="city"
-                      value={deliveryAddress.city}
-                      onChange={handleAddressChange}
+                      name="cardHolderName"
+                      value={cardDetails.cardHolderName}
+                      onChange={handleCardDetailsChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
                       required
+                      placeholder="John Doe"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      State
-                    </label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={deliveryAddress.state}
-                      onChange={handleAddressChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Zip Code
-                    </label>
-                    <input
-                      type="text"
-                      name="zipCode"
-                      value={deliveryAddress.zipCode}
-                      onChange={handleAddressChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Country
-                    </label>
-                    <input
-                      type="text"
-                      name="country"
-                      value={deliveryAddress.country}
-                      onChange={handleAddressChange}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                      required
-                      disabled
-                    />
+                  <div className="flex space-x-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Expiry Date
+                      </label>
+                      <input
+                        type="text"
+                        name="expiryDate"
+                        value={cardDetails.expiryDate}
+                        onChange={handleCardDetailsChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                        required
+                        placeholder="MM/YY"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-gray-700">
+                        CVV
+                      </label>
+                      <input
+                        type="text"
+                        name="cvv"
+                        value={cardDetails.cvv}
+                        onChange={handleCardDetailsChange}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                        required
+                        placeholder="123"
+                      />
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Payment Method */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Payment Method
-                </label>
-                <select
-                  value={paymentMethod}
-                  onChange={(e) =>
-                    setPaymentMethod(
-                      e.target.value as "CREDIT_CARD" | "CASH" | "ONLINE"
-                    )
-                  }
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
-                >
-                  <option value="CREDIT_CARD">Credit Card</option>
-                  <option value="CASH">Cash on Delivery</option>
-                  <option value="ONLINE">Online Payment</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading || !deliveryLocation}
-                className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50"
-              >
-                {loading ? "Placing Order..." : "Place Order"}
-              </button>
-            </form>
-          </div>
+            <button
+              type="submit"
+              disabled={loading || !deliveryLocation}
+              className="w-full bg-orange-500 text-white py-2 px-4 rounded-md hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-50"
+            >
+              {loading
+                ? "Placing Order..."
+                : (paymentMethod === "CREDIT_CARD" ||
+                    paymentMethod === "DEBIT_CARD") &&
+                  !showCardDetails
+                ? "Proceed to Payment"
+                : "Place Order"}
+            </button>
+          </form>
         </div>
       </div>
 
@@ -537,7 +752,7 @@ const Checkout: React.FC = () => {
         onConfirm={handleNoDriversModalConfirm}
         title="No Available Drivers"
         message="No delivery drivers are currently available in your area. You can place your order and wait for the driver to be assigned. Please contact support for assistance."
-        confirmText="Continue to Orders"
+        confirmText="Continue to Order"
         cancelText="Stay on Page"
       />
     </div>
