@@ -1,5 +1,5 @@
 import React from 'react';
-import CustomButton from './CustomButton'; // Adjust the import path as needed
+import CustomButton from './CustomButton';
 
 interface RestaurantData {
   id: string;
@@ -11,6 +11,7 @@ interface RestaurantData {
   imageUrl: string;
   deliveryDistance: string;
   giftDineIn: boolean;
+  isAvailable: boolean; // Added
 }
 
 interface RestaurantCardProps {
@@ -20,7 +21,11 @@ interface RestaurantCardProps {
 
 const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onViewMenu }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-transform transform hover:scale-105">
+    <div
+      className={`bg-white dark:bg-gray-800 rounded-lg overflow-hidden transition-transform transform hover:scale-105 ${
+        restaurant.isAvailable ? 'shadow-md' : 'shadow-lg opacity-75'
+      }`}
+    >
       {/* Restaurant Image */}
       <img
         src={restaurant.imageUrl}
@@ -52,6 +57,11 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onViewMenu 
           {restaurant.giftDineIn && <span className="text-orange-600">Gift Dine In</span>}
         </div>
 
+        {/* Availability Message */}
+        {!restaurant.isAvailable && (
+          <p className="mt-2 text-sm text-red-600 font-medium">Currently Unavailable</p>
+        )}
+
         {/* View Menu Button */}
         <div className="mt-4">
           <CustomButton
@@ -60,6 +70,7 @@ const RestaurantCard: React.FC<RestaurantCardProps> = ({ restaurant, onViewMenu 
             textColor="text-white"
             onClick={() => onViewMenu(restaurant.id)}
             style="hover:bg-orange-700"
+            disabled={!restaurant.isAvailable} // Added
           />
         </div>
       </div>

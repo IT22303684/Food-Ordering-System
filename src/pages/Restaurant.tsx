@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import RestaurantCard from '@/components/UI/RestaurantCard'; // Adjust the import path as needed
-import { getAllRestaurants } from '@/utils/api'; // Adjust the import path as needed
+import RestaurantCard from '@/components/UI/RestaurantCard';
+import { getAllRestaurants } from '@/utils/api';
 
 interface RestaurantData {
   id: string;
@@ -13,6 +13,7 @@ interface RestaurantData {
   imageUrl: string;
   deliveryDistance: string;
   giftDineIn: boolean;
+  isAvailable: boolean; // Added
 }
 
 interface PaginationData {
@@ -41,12 +42,13 @@ const Restaurant: React.FC = () => {
         id: restaurant._id,
         name: restaurant.restaurantName,
         cuisine: restaurant.cuisineType,
-        city: restaurant.address.city, // New: From address.city
-        operatingHours: restaurant.operatingHours, // New: From operatingHours
-        phoneNumber: restaurant.phoneNumber, // New: From phoneNumber
+        city: restaurant.address.city,
+        operatingHours: restaurant.operatingHours,
+        phoneNumber: restaurant.phoneNumber,
         imageUrl: restaurant.exteriorPhoto || 'https://via.placeholder.com/300x200',
         deliveryDistance: `< ${restaurant.deliveryRadius}`,
-        giftDineIn: Math.random() > 0.5, // Random for now; add to backend if needed
+        giftDineIn: Math.random() > 0.5, // Random; update if backend provides
+        isAvailable: restaurant.availability ?? true, // Default to true if undefined
       }));
       setRestaurants(mappedRestaurants);
       setPagination(response.pagination);
