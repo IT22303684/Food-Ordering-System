@@ -1,25 +1,25 @@
 interface CustomButtonProps {
   title: string;
-  bgColor?: string;
-  textColor?: string;
-  height?: string;
-  onClick?: () => void;
+  bgColor: string;
+  textColor: string;
+  onClick: () => void;
   style?: string;
+  disabled?: boolean;
 }
 
 const CustomButton = ({
   title,
-  bgColor = "bg-orange-600",
-  textColor = "text-white",
-  height = "44px",
+  bgColor,
+  textColor,
   onClick,
-  style = "",
+  style,
+  disabled = false,
 }: CustomButtonProps) => {
   return (
     <button
+      className={`${bgColor} ${textColor} ${style} w-full rounded-md px-4 py-2 font-medium transition-colors`}
       onClick={onClick}
-      className={`w-full ${bgColor} ${textColor} ${style} transition-all duration-300`}
-      style={{ height }}
+      disabled={disabled}
     >
       {title}
     </button>
