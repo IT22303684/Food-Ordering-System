@@ -67,10 +67,15 @@ const RestaurantMenu: React.FC = () => {
         const restaurantData = restaurantResponse.data || restaurantResponse;
         const menuItems = menuItemsResponse.data || menuItemsResponse;
 
-        // Fetch unique categories
+        // Filter menu items to only include those where isAvailable = true
+        const availableMenuItems = menuItems.filter(
+          (item: MenuItem) => item.isAvailable === true
+        );
+
+        // Fetch unique categories from available items
         const categoryIds: string[] = Array.from(
           new Set(
-            menuItems
+            availableMenuItems
               .map((item: MenuItem) => item.category)
               .filter((category: string | undefined): category is string => !!category)
           )
@@ -81,15 +86,17 @@ const RestaurantMenu: React.FC = () => {
             return null;
           })
         );
-        const categories = (await Promise.all(categoryPromises)).filter((cat) => cat !== null) as Category[];
+        const categories = (await Promise.all(categoryPromises)).filter(
+          (cat) => cat !== null
+        ) as Category[];
         const categoriesMap = categories.reduce((acc, category) => {
           acc[category._id] = category;
           return acc;
         }, {} as { [key: string]: Category });
 
-        // Group menu items by category
+        // Group available menu items by category
         const groupedItems: { [key: string]: MenuItem[] } = {};
-        menuItems.forEach((item: MenuItem) => {
+        availableMenuItems.forEach((item: MenuItem) => {
           const categoryId = item.category || 'uncategorized';
           if (!groupedItems[categoryId]) {
             groupedItems[categoryId] = [];
@@ -219,23 +226,31 @@ const RestaurantMenu: React.FC = () => {
             filteredMenuSections.map((section) => (
               <div key={section.categoryId}>
                 <h2 className="text-2xl font-bold mb-4">{section.section}</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
-                  {section.items.map((item, i) => (
-                    <MenuCard
-                      key={item._id}
-                      item={{
-                        ...item,
-                        category: section.section, // Use section name directly
-                      }}
-                      restaurantId={restaurantId}
-                      index={i}
-                    />
-                  ))}
-                </div>
+                {section.items.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+                    {section.items.map((item, i) => (
+                      <MenuCard
+                        key={item._id}
+                        item={{
+                          ...item,
+                          category: section.section, // Use section name directly
+                        }}
+                        restaurantId={restaurantId}
+                        index={i}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-gray-500">
+                    No available items in this category.
+                  </div>
+                )}
               </div>
             ))
           ) : (
-            <div className="text-center py-8">No menu items match your criteria.</div>
+            <div className="text-center py-8 text-gray-500">
+              No available menu items match your criteria.
+            </div>
           )}
         </div>
 
