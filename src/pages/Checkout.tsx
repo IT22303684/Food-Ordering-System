@@ -53,6 +53,10 @@ const Checkout: React.FC = () => {
     expiryDate: "",
     cvv: "",
   });
+  const [showDriverFoundModal, setShowDriverFoundModal] = useState(false);
+  const [driverFoundOrderId, setDriverFoundOrderId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchDefaultAddress = async () => {
@@ -139,21 +143,9 @@ const Checkout: React.FC = () => {
         if (deliveryResponse.status === "success") {
           console.log("Driver found in new location!");
           setShowNoDriversModal(false);
-          setPendingOrderId(null);
+          setDriverFoundOrderId(pendingOrderId);
+          setShowDriverFoundModal(true);
           toast.success("Driver found in the new location!");
-
-          // Proceed with payment flow
-          if (
-            paymentMethod === "CREDIT_CARD" ||
-            paymentMethod === "DEBIT_CARD"
-          ) {
-            await handleCardPayment(pendingOrderId, cartId!);
-          } else {
-            await updateOrderStatus(pendingOrderId, "CONFIRMED");
-            await clearCartItems();
-            toast.success("Order placed successfully!");
-            navigate("/orders");
-          }
         } else if (
           deliveryResponse.message === "No available drivers found in the area"
         ) {
@@ -458,6 +450,36 @@ const Checkout: React.FC = () => {
     console.log("Modal close, keeping pendingOrderId:", pendingOrderId);
     setShowNoDriversModal(false);
     setLoading(false);
+  };
+
+  const handleDriverFoundConfirm = async () => {
+    if (!driverFoundOrderId) return;
+
+    try {
+      // Proceed with payment flow
+      if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
+        await handleCardPayment(driverFoundOrderId, cartId!);
+      } else {
+        await updateOrderStatus(driverFoundOrderId, "CONFIRMED");
+        await clearCartItems();
+        toast.success("Order placed successfully!");
+        navigate("/orders");
+      }
+    } catch (error) {
+      console.error("Error processing order:", error);
+      toast.error("Failed to process order");
+    } finally {
+      setShowDriverFoundModal(false);
+      setDriverFoundOrderId(null);
+      setPendingOrderId(null);
+    }
+  };
+
+  const handleDriverFoundCancel = () => {
+    setShowDriverFoundModal(false);
+    setDriverFoundOrderId(null);
+    setPendingOrderId(null);
+    toast.info("Order placement cancelled");
   };
 
   return (
@@ -816,6 +838,16 @@ const Checkout: React.FC = () => {
         message="No delivery drivers are currently available in your area. You can place your order and wait for the driver to be assigned. Please contact support for assistance."
         confirmText="Continue to Order"
         cancelText="Stay on Page"
+      />
+
+      <Modal
+        isOpen={showDriverFoundModal}
+        onClose={handleDriverFoundCancel}
+        onConfirm={handleDriverFoundConfirm}
+        title="Driver Found!"
+        message="A delivery driver is now available in your area. Would you like to proceed with placing your order?"
+        confirmText="Place Order"
+        cancelText="Cancel"
       />
     </div>
   );

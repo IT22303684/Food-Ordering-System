@@ -89,92 +89,125 @@ const DriverDashboard: React.FC = () => {
     }
   }, [location]);
 
-  const getCurrentLocation = async () => {
-    if (navigator.geolocation) {
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        toast.error("Geolocation is not supported by your browser");
+        reject(new Error("Geolocation not supported"));
+        return;
+      }
+
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          const newLocation: [number, number] = [
-            position.coords.latitude,
-            position.coords.longitude,
-          ];
-          setCurrentLocation(newLocation);
-          setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+          try {
+            const newLocation: [number, number] = [
+              position.coords.latitude,
+              position.coords.longitude,
+            ];
+            setCurrentLocation(newLocation);
+            setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
 
-          // Update location in backend if driver exists
-          if (driver?._id) {
-            try {
+            // Update location in backend if driver exists
+            if (driver?._id) {
               await updateDriverLocation(driver._id, newLocation);
               toast.success("Location updated successfully");
-            } catch (error) {
-              console.error("Failed to update location in backend:", error);
-              toast.error("Failed to update location in backend");
+              resolve(newLocation);
+            } else {
+              toast.error("Driver ID not found");
+              reject(new Error("Driver ID not found"));
             }
+          } catch (error) {
+            console.error("Failed to update location in backend:", error);
+            toast.error("Failed to update location in backend");
+            reject(error);
           }
         },
         (error) => {
-          toast.error("Failed to get location");
           console.error("Geolocation error:", error);
+          let errorMessage = "Failed to get location";
+          switch (error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "Please allow location access to continue";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location information is unavailable";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "Location request timed out";
+              break;
+          }
+          toast.error(errorMessage);
+          reject(error);
         },
         {
           enableHighAccuracy: true,
-          timeout: 5000,
+          timeout: 10000,
           maximumAge: 0,
         }
       );
-    } else {
-      toast.error("Geolocation is not supported by your browser");
-    }
+    });
   };
 
   useEffect(() => {
     let watchId: number | null = null;
 
     if (driver?._id && isAvailable) {
-      // Start watching location
       if (navigator.geolocation) {
         watchId = navigator.geolocation.watchPosition(
           async (position) => {
-            const newLocation: [number, number] = [
-              position.coords.latitude,
-              position.coords.longitude,
-            ];
+            try {
+              const newLocation: [number, number] = [
+                position.coords.latitude,
+                position.coords.longitude,
+              ];
 
-            // Only update if location has changed significantly (more than 10 meters)
-            if (
-              currentLocation &&
-              (Math.abs(currentLocation[0] - newLocation[0]) > 0.0001 ||
-                Math.abs(currentLocation[1] - newLocation[1]) > 0.0001)
-            ) {
-              setCurrentLocation(newLocation);
-              setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+              // Only update if location has changed significantly (more than 10 meters)
+              if (
+                currentLocation &&
+                (Math.abs(currentLocation[0] - newLocation[0]) > 0.0001 ||
+                  Math.abs(currentLocation[1] - newLocation[1]) > 0.0001)
+              ) {
+                setCurrentLocation(newLocation);
+                setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
 
-              try {
                 await updateDriverLocation(driver._id, newLocation);
                 console.log("Location updated in backend");
-              } catch (error) {
-                console.error("Failed to update location in backend:", error);
               }
+            } catch (error) {
+              console.error("Failed to update location in backend:", error);
             }
           },
           (error) => {
             console.error("Geolocation watch error:", error);
+            let errorMessage = "Failed to watch location";
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                errorMessage = "Location access denied";
+                break;
+              case error.POSITION_UNAVAILABLE:
+                errorMessage = "Location information unavailable";
+                break;
+              case error.TIMEOUT:
+                errorMessage = "Location request timed out";
+                break;
+            }
+            toast.error(errorMessage);
           },
           {
             enableHighAccuracy: true,
-            timeout: 5000,
+            timeout: 10000,
             maximumAge: 0,
           }
         );
       }
     }
 
-    // Cleanup watch on unmount or when driver becomes unavailable
     return () => {
       if (watchId !== null) {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [driver?._id, isAvailable]);
+  }, [driver?._id, isAvailable, currentLocation]);
 
   const handleToggleAvailability = async () => {
     try {
