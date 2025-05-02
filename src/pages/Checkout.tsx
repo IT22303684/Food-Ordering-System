@@ -89,6 +89,10 @@ const Checkout: React.FC = () => {
   }, [paymentMethod]);
 
   useEffect(() => {
+    console.log("Delivery location updated:", deliveryLocation);
+  }, [deliveryLocation]);
+
+  useEffect(() => {
     const getCurrentLocation = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -97,20 +101,71 @@ const Checkout: React.FC = () => {
               position.coords.latitude,
               position.coords.longitude,
             ];
-            setDeliveryLocation(newLocation);
-            setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+            console.log("Getting initial location:", newLocation);
+            handleLocationUpdate(newLocation);
           },
           (error) => {
             toast.error("Failed to get location");
             console.error("Geolocation error:", error);
-          }
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
       } else {
         toast.error("Geolocation is not supported by your browser");
       }
     };
+
+    console.log("Getting current location on mount");
     getCurrentLocation();
   }, []);
+
+  const handleLocationUpdate = async (newLocation: [number, number]) => {
+    try {
+      console.log("Handling location update:", newLocation);
+      setDeliveryLocation(newLocation);
+      setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+
+      // If there's a pending order, try to assign a driver with the new location
+      if (pendingOrderId) {
+        console.log(
+          "Trying to assign driver with new location for order:",
+          pendingOrderId
+        );
+        const deliveryResponse = await assignDeliveryDriver(
+          pendingOrderId,
+          newLocation
+        );
+
+        if (deliveryResponse.status === "success") {
+          console.log("Driver found in new location!");
+          setShowNoDriversModal(false);
+          setPendingOrderId(null);
+          toast.success("Driver found in the new location!");
+
+          // Proceed with payment flow
+          if (
+            paymentMethod === "CREDIT_CARD" ||
+            paymentMethod === "DEBIT_CARD"
+          ) {
+            await handleCardPayment(pendingOrderId, cartId!);
+          } else {
+            await updateOrderStatus(pendingOrderId, "CONFIRMED");
+            await clearCartItems();
+            toast.success("Order placed successfully!");
+            navigate("/orders");
+          }
+        } else if (
+          deliveryResponse.message === "No available drivers found in the area"
+        ) {
+          console.log("No drivers available in new location");
+          toast.warning("No drivers available in the new location yet");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating location:", error);
+      toast.error("Failed to update location");
+    }
+  };
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -131,8 +186,7 @@ const Checkout: React.FC = () => {
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
     if (e.latLng) {
       const location: [number, number] = [e.latLng.lat(), e.latLng.lng()];
-      setDeliveryLocation(location);
-      setMapCenter({ lat: location[0], lng: location[1] });
+      handleLocationUpdate(location);
     }
   };
 
@@ -304,7 +358,12 @@ const Checkout: React.FC = () => {
           deliveryLocation[0],
           deliveryLocation[1],
         ];
-        console.log("Assigning driver for order:", order._id, "Location:", formattedLocation);
+        console.log(
+          "Assigning driver for order:",
+          order._id,
+          "Location:",
+          formattedLocation
+        );
         const deliveryResponse = await assignDeliveryDriver(
           order._id,
           formattedLocation
@@ -329,7 +388,10 @@ const Checkout: React.FC = () => {
         }
 
         // Proceed with payment or order confirmation
-        console.log("Driver assigned, proceeding with payment. Payment method:", paymentMethod);
+        console.log(
+          "Driver assigned, proceeding with payment. Payment method:",
+          paymentMethod
+        );
         if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
           console.log("Initiating card payment for order:", order._id);
           await handleCardPayment(order._id, cartId!);
@@ -437,13 +499,13 @@ const Checkout: React.FC = () => {
                         position.coords.latitude,
                         position.coords.longitude,
                       ];
-                      setDeliveryLocation(newLocation);
-                      setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+                      handleLocationUpdate(newLocation);
                     },
                     (error) => {
                       toast.error("Failed to get location");
                       console.error("Geolocation error:", error);
-                    }
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                   );
                 } else {
                   toast.error("Geolocation is not supported by your browser");

@@ -19,6 +19,7 @@ import {
   getCurrentDriver,
   getDeliveryStatus,
   getOrderById,
+  updateDriverLocation,
 } from "../../utils/api";
 import OrderDetailsModal from "../../components/OrderDetailsModal";
 
@@ -88,20 +89,36 @@ const DriverDashboard: React.FC = () => {
     }
   }, [location]);
 
-  const getCurrentLocation = () => {
+  const getCurrentLocation = async () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        async (position) => {
           const newLocation: [number, number] = [
             position.coords.latitude,
             position.coords.longitude,
           ];
           setCurrentLocation(newLocation);
           setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+
+          // Update location in backend if driver exists
+          if (driver?._id) {
+            try {
+              await updateDriverLocation(driver._id, newLocation);
+              toast.success("Location updated successfully");
+            } catch (error) {
+              console.error("Failed to update location in backend:", error);
+              toast.error("Failed to update location in backend");
+            }
+          }
         },
         (error) => {
           toast.error("Failed to get location");
           console.error("Geolocation error:", error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0,
         }
       );
     } else {
@@ -110,8 +127,54 @@ const DriverDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    getCurrentLocation();
-  }, []);
+    let watchId: number | null = null;
+
+    if (driver?._id && isAvailable) {
+      // Start watching location
+      if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(
+          async (position) => {
+            const newLocation: [number, number] = [
+              position.coords.latitude,
+              position.coords.longitude,
+            ];
+
+            // Only update if location has changed significantly (more than 10 meters)
+            if (
+              currentLocation &&
+              (Math.abs(currentLocation[0] - newLocation[0]) > 0.0001 ||
+                Math.abs(currentLocation[1] - newLocation[1]) > 0.0001)
+            ) {
+              setCurrentLocation(newLocation);
+              setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+
+              try {
+                await updateDriverLocation(driver._id, newLocation);
+                console.log("Location updated in backend");
+              } catch (error) {
+                console.error("Failed to update location in backend:", error);
+              }
+            }
+          },
+          (error) => {
+            console.error("Geolocation watch error:", error);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+          }
+        );
+      }
+    }
+
+    // Cleanup watch on unmount or when driver becomes unavailable
+    return () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+  }, [driver?._id, isAvailable]);
 
   const handleToggleAvailability = async () => {
     try {
@@ -344,13 +407,20 @@ const DriverDashboard: React.FC = () => {
               </p>
             </div>
           </div>
-          {/* <button
-            onClick={getCurrentLocation}
+          <button
+            onClick={async () => {
+              try {
+                await getCurrentLocation();
+              } catch (error) {
+                console.error("Error updating location:", error);
+                toast.error("Failed to update location");
+              }
+            }}
             className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center space-x-2"
           >
             <FaMapMarkerAlt />
             <span>Update Location</span>
-          </button> */}
+          </button>
         </div>
         <div className="h-64 w-full rounded-lg overflow-hidden">
           <LoadScript
