@@ -101,12 +101,12 @@ const Checkout: React.FC = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const newLocation: [number, number] = [
-              position.coords.latitude,
+            // For MongoDB: [longitude, latitude]
+            const dbLocation: [number, number] = [
               position.coords.longitude,
+              position.coords.latitude,
             ];
-            console.log("Getting initial location:", newLocation);
-            handleLocationUpdate(newLocation);
+            handleLocationUpdate(dbLocation);
           },
           (error) => {
             toast.error("Failed to get location");
@@ -123,11 +123,14 @@ const Checkout: React.FC = () => {
     getCurrentLocation();
   }, []);
 
-  const handleLocationUpdate = async (newLocation: [number, number]) => {
+  const handleLocationUpdate = async (dbLocation: [number, number]) => {
     try {
-      console.log("Handling location update:", newLocation);
-      setDeliveryLocation(newLocation);
-      setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+      console.log("Handling location update:", dbLocation);
+      setDeliveryLocation(dbLocation);
+      setMapCenter({
+        lat: dbLocation[1], // latitude is second in MongoDB format
+        lng: dbLocation[0], // longitude is first in MongoDB format
+      });
 
       // If there's a pending order, try to assign a driver with the new location
       if (pendingOrderId) {
@@ -137,7 +140,7 @@ const Checkout: React.FC = () => {
         );
         const deliveryResponse = await assignDeliveryDriver(
           pendingOrderId,
-          newLocation
+          dbLocation // Already in MongoDB format [longitude, latitude]
         );
 
         if (deliveryResponse.status === "success") {
@@ -177,8 +180,9 @@ const Checkout: React.FC = () => {
 
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
     if (e.latLng) {
-      const location: [number, number] = [e.latLng.lat(), e.latLng.lng()];
-      handleLocationUpdate(location);
+      // For MongoDB: [longitude, latitude]
+      const dbLocation: [number, number] = [e.latLng.lng(), e.latLng.lat()];
+      handleLocationUpdate(dbLocation);
     }
   };
 
@@ -336,7 +340,6 @@ const Checkout: React.FC = () => {
         throw new Error("Order creation failed - no order ID received");
       }
 
-      // Verify order
       await new Promise((resolve) => setTimeout(resolve, 1000));
       const verifiedOrder = await getOrderById(order._id);
       console.log("Verified order:", verifiedOrder);
@@ -344,7 +347,6 @@ const Checkout: React.FC = () => {
         throw new Error("Order not found in database");
       }
 
-      // Assign delivery driver
       try {
         const formattedLocation: [number, number] = [
           deliveryLocation[0],
@@ -379,7 +381,6 @@ const Checkout: React.FC = () => {
           );
         }
 
-        // Proceed with payment or order confirmation
         console.log(
           "Driver assigned, proceeding with payment. Payment method:",
           paymentMethod
@@ -456,7 +457,6 @@ const Checkout: React.FC = () => {
     if (!driverFoundOrderId) return;
 
     try {
-      // Proceed with payment flow
       if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
         await handleCardPayment(driverFoundOrderId, cartId!);
       } else {
@@ -482,12 +482,19 @@ const Checkout: React.FC = () => {
     toast.info("Order placement cancelled");
   };
 
+  // const getDisplayLocation = () => {
+  //   if (!deliveryLocation) return null;
+  //   return {
+  //     lat: deliveryLocation[1],
+  //     lng: deliveryLocation[0],
+  //   };
+  // };
+
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
       <h1 className="text-2xl font-bold mb-6">Checkout</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Order Summary */}
         <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
           <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
           <div className="max-h-[400px] overflow-y-auto">
@@ -508,7 +515,6 @@ const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* Delivery Address and Payment Form */}
         <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Delivery Location</h2>
@@ -518,8 +524,8 @@ const Checkout: React.FC = () => {
                   navigator.geolocation.getCurrentPosition(
                     (position) => {
                       const newLocation: [number, number] = [
-                        position.coords.latitude,
                         position.coords.longitude,
+                        position.coords.latitude,
                       ];
                       handleLocationUpdate(newLocation);
                     },
@@ -561,8 +567,8 @@ const Checkout: React.FC = () => {
                 {deliveryLocation && (
                   <Marker
                     position={{
-                      lat: deliveryLocation[0],
-                      lng: deliveryLocation[1],
+                      lat: deliveryLocation[1],
+                      lng: deliveryLocation[0],
                     }}
                     icon={{
                       url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
@@ -583,8 +589,8 @@ const Checkout: React.FC = () => {
                 Selected Location:
               </p>
               <p className="text-sm text-gray-600">
-                Lat: {deliveryLocation[0].toFixed(4)}, Long:{" "}
-                {deliveryLocation[1].toFixed(4)}
+                Lat: {deliveryLocation[1].toFixed(4)}, Long:{" "}
+                {deliveryLocation[0].toFixed(4)}
               </p>
             </div>
           )}

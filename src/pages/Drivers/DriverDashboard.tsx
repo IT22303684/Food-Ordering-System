@@ -11,7 +11,6 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaUser,
-  FaLocationArrow,
 } from "react-icons/fa";
 import { GoogleMap, LoadScript, Marker } from "@react-google-maps/api";
 import {
@@ -68,7 +67,7 @@ const DriverDashboard: React.FC = () => {
   const [mapCenter, setMapCenter] = useState({ lat: 1.3143, lng: 103.7093 });
   const [currentLocation, setCurrentLocation] = useState<
     [number, number] | null
-  >([1.3143, 103.7093]);
+  >([103.7093, 1.3143]);
   const [customerLocation, setCustomerLocation] = useState<
     [number, number] | null
   >(null);
@@ -89,55 +88,37 @@ const DriverDashboard: React.FC = () => {
     }
   }, [location]);
 
-  const getCurrentLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        toast.error("Geolocation is not supported by your browser");
-        reject(new Error("Geolocation not supported"));
-        return;
-      }
-
+  const getCurrentLocation = async () => {
+    if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
-          try {
-            const newLocation: [number, number] = [
-              position.coords.latitude,
-              position.coords.longitude,
-            ];
-            setCurrentLocation(newLocation);
-            setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+          const newLocation: [number, number] = [
+            position.coords.longitude,
+            position.coords.latitude,
+          ];
+          setCurrentLocation([
+            position.coords.latitude,
+            position.coords.longitude,
+          ]);
+          setMapCenter({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
 
-            // Update location in backend if driver exists
-            if (driver?._id) {
+          // Update location in backend if driver exists
+          if (driver?._id) {
+            try {
               await updateDriverLocation(driver._id, newLocation);
               toast.success("Location updated successfully");
-              resolve(newLocation);
-            } else {
-              toast.error("Driver ID not found");
-              reject(new Error("Driver ID not found"));
+            } catch (error) {
+              console.error("Failed to update location in backend:", error);
+              toast.error("Failed to update location in backend");
             }
-          } catch (error) {
-            console.error("Failed to update location in backend:", error);
-            toast.error("Failed to update location in backend");
-            reject(error);
           }
         },
         (error) => {
+          toast.error("Failed to get location");
           console.error("Geolocation error:", error);
-          let errorMessage = "Failed to get location";
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = "Please allow location access to continue";
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = "Location information is unavailable";
-              break;
-            case error.TIMEOUT:
-              errorMessage = "Location request timed out";
-              break;
-          }
-          toast.error(errorMessage);
-          reject(error);
         },
         {
           enableHighAccuracy: true,
@@ -145,69 +126,14 @@ const DriverDashboard: React.FC = () => {
           maximumAge: 0,
         }
       );
-    });
+    } else {
+      toast.error("Geolocation is not supported by your browser");
+    }
   };
 
   useEffect(() => {
-    let watchId: number | null = null;
-
-    if (driver?._id && isAvailable) {
-      if (navigator.geolocation) {
-        watchId = navigator.geolocation.watchPosition(
-          async (position) => {
-            try {
-              const newLocation: [number, number] = [
-                position.coords.latitude,
-                position.coords.longitude,
-              ];
-
-              // Only update if location has changed significantly (more than 10 meters)
-              if (
-                currentLocation &&
-                (Math.abs(currentLocation[0] - newLocation[0]) > 0.0001 ||
-                  Math.abs(currentLocation[1] - newLocation[1]) > 0.0001)
-              ) {
-                setCurrentLocation(newLocation);
-                setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
-
-                await updateDriverLocation(driver._id, newLocation);
-                console.log("Location updated in backend");
-              }
-            } catch (error) {
-              console.error("Failed to update location in backend:", error);
-            }
-          },
-          (error) => {
-            console.error("Geolocation watch error:", error);
-            let errorMessage = "Failed to watch location";
-            switch (error.code) {
-              case error.PERMISSION_DENIED:
-                errorMessage = "Location access denied";
-                break;
-              case error.POSITION_UNAVAILABLE:
-                errorMessage = "Location information unavailable";
-                break;
-              case error.TIMEOUT:
-                errorMessage = "Location request timed out";
-                break;
-            }
-            toast.error(errorMessage);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0,
-          }
-        );
-      }
-    }
-
-    return () => {
-      if (watchId !== null) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, [driver?._id, isAvailable, currentLocation]);
+    getCurrentLocation();
+  }, []);
 
   const handleToggleAvailability = async () => {
     try {
@@ -427,32 +353,25 @@ const DriverDashboard: React.FC = () => {
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
             <div className="p-3 bg-blue-100 rounded-full">
-              <FaLocationArrow className="text-blue-500 text-2xl" />
+              <FaMapMarkerAlt className="text-blue-500 text-2xl" />
             </div>
             <div>
               <h2 className="text-xl font-semibold">Location Information</h2>
               <p className="text-gray-600">
                 {currentLocation
-                  ? `Current Location: Lat: ${currentLocation[0].toFixed(
+                  ? `Current Location: Long: ${currentLocation[0].toFixed(
                       4
-                    )}, Long: ${currentLocation[1].toFixed(4)}`
+                    )}, Lat: ${currentLocation[1].toFixed(4)}`
                   : "Location not set"}
               </p>
             </div>
           </div>
           <button
-            onClick={async () => {
-              try {
-                await getCurrentLocation();
-              } catch (error) {
-                console.error("Error updating location:", error);
-                toast.error("Failed to update location");
-              }
-            }}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center space-x-2"
+            onClick={getCurrentLocation}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
           >
-            <FaMapMarkerAlt />
-            <span>Update Location</span>
+            <FaMapMarkerAlt className="inline mr-2" />
+            Update Location
           </button>
         </div>
         <div className="h-64 w-full rounded-lg overflow-hidden">
@@ -464,33 +383,12 @@ const DriverDashboard: React.FC = () => {
               mapContainerStyle={{ width: "100%", height: "100%" }}
               center={mapCenter}
               zoom={15}
-              options={{
-                disableDefaultUI: false,
-                zoomControl: true,
-                mapTypeControl: true,
-                streetViewControl: true,
-                fullscreenControl: true,
-              }}
             >
               {currentLocation && (
                 <Marker
                   position={{
-                    lat: currentLocation[0],
-                    lng: currentLocation[1],
-                  }}
-                  icon={{
-                    url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
-                  }}
-                />
-              )}
-              {customerLocation && (
-                <Marker
-                  position={{
-                    lat: customerLocation[0],
-                    lng: customerLocation[1],
-                  }}
-                  icon={{
-                    url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                    lat: currentLocation[1], // Use latitude from stored location
+                    lng: currentLocation[0], // Use longitude from stored location
                   }}
                 />
               )}
