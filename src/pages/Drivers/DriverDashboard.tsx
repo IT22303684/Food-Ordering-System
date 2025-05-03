@@ -84,34 +84,27 @@ const DriverDashboard: React.FC = () => {
 
   useEffect(() => {
     if (location) {
-      setMapCenter({ lat: location[0], lng: location[1] });
+      setMapCenter({
+        lat: location[1],
+        lng: location[0],
+      });
     }
   }, [location]);
 
-  const getCurrentLocation = () => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        toast.error("Geolocation is not supported by your browser");
-        reject(new Error("Geolocation not supported"));
-        return;
-      }
-
+  const getCurrentLocation = async () => {
+    if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           try {
-            // For MongoDB: [longitude, latitude]
+            // Store in MongoDB format [longitude, latitude]
             const dbLocation: [number, number] = [
               position.coords.longitude,
               position.coords.latitude,
             ];
+            console.log("Setting location in MongoDB format:", dbLocation);
 
-            // For UI: [latitude, longitude]
-            const uiLocation: [number, number] = [
-              position.coords.latitude,
-              position.coords.longitude,
-            ];
-
-            setCurrentLocation(uiLocation);
+            setCurrentLocation(dbLocation);
+            // Convert to Google Maps format for display
             setMapCenter({
               lat: position.coords.latitude,
               lng: position.coords.longitude,
@@ -121,33 +114,17 @@ const DriverDashboard: React.FC = () => {
             if (driver?._id) {
               await updateDriverLocation(driver._id, dbLocation);
               toast.success("Location updated successfully");
-              resolve(uiLocation);
             } else {
               toast.error("Driver ID not found");
-              reject(new Error("Driver ID not found"));
             }
           } catch (error) {
-            console.error("Failed to update location in backend:", error);
-            toast.error("Failed to update location in backend");
-            reject(error);
+            console.error("Failed to update location:", error);
+            toast.error("Failed to update location");
           }
         },
         (error) => {
+          toast.error("Failed to get location");
           console.error("Geolocation error:", error);
-          let errorMessage = "Failed to get location";
-          switch (error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage = "Please allow location access to continue";
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage = "Location information is unavailable";
-              break;
-            case error.TIMEOUT:
-              errorMessage = "Location request timed out";
-              break;
-          }
-          toast.error(errorMessage);
-          reject(error);
         },
         {
           enableHighAccuracy: true,
@@ -155,7 +132,9 @@ const DriverDashboard: React.FC = () => {
           maximumAge: 0,
         }
       );
-    });
+    } else {
+      toast.error("Geolocation is not supported by your browser");
+    }
   };
 
   useEffect(() => {
@@ -166,25 +145,17 @@ const DriverDashboard: React.FC = () => {
         watchId = navigator.geolocation.watchPosition(
           async (position) => {
             try {
-              // For MongoDB: [longitude, latitude]
               const dbLocation: [number, number] = [
                 position.coords.longitude,
                 position.coords.latitude,
               ];
 
-              // For UI: [latitude, longitude]
-              const uiLocation: [number, number] = [
-                position.coords.latitude,
-                position.coords.longitude,
-              ];
-
-              // Only update if location has changed significantly (more than 10 meters)
               if (
                 currentLocation &&
-                (Math.abs(currentLocation[0] - uiLocation[0]) > 0.0001 ||
-                  Math.abs(currentLocation[1] - uiLocation[1]) > 0.0001)
+                (Math.abs(currentLocation[0] - dbLocation[0]) > 0.0001 ||
+                  Math.abs(currentLocation[1] - dbLocation[1]) > 0.0001)
               ) {
-                setCurrentLocation(uiLocation);
+                setCurrentLocation(dbLocation);
                 setMapCenter({
                   lat: position.coords.latitude,
                   lng: position.coords.longitude,
@@ -251,7 +222,6 @@ const DriverDashboard: React.FC = () => {
       await completeDelivery(driver._id);
       toast.success("Delivery completed successfully!");
 
-      // Refresh the page after a short delay
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -263,19 +233,14 @@ const DriverDashboard: React.FC = () => {
     }
   };
 
-  // Function to fetch and update driver data
   const fetchDriverData = async () => {
     try {
       if (!user?.id) return;
 
       const response = await getCurrentDriver(user.id);
       if (response.data) {
-        // Update the driver context with new data
-        // You might want to add an updateDriver function to your DriverContext
-        // For now, we'll just log the changes
         console.log("Driver data updated:", response.data);
 
-        // Check for changes in delivery status
         if (driver?.currentDelivery !== response.data.currentDelivery) {
           if (response.data.currentDelivery) {
             toast.info("New delivery assigned!");
@@ -284,7 +249,6 @@ const DriverDashboard: React.FC = () => {
           }
         }
 
-        // Check for changes in availability
         if (driver?.isAvailable !== response.data.isAvailable) {
           toast.info(
             `You are now ${
@@ -298,19 +262,14 @@ const DriverDashboard: React.FC = () => {
     }
   };
 
-  // Set up polling interval
   useEffect(() => {
-    // Initial fetch
     fetchDriverData();
 
-    // Set up interval to fetch every 30 seconds
     const intervalId = setInterval(fetchDriverData, 30000);
 
-    // Clean up interval on component unmount
     return () => clearInterval(intervalId);
   }, [user?.id]);
 
-  // Fetch delivery details when currentDelivery changes
   useEffect(() => {
     const fetchDeliveryDetails = async () => {
       if (driver?.currentDelivery) {
@@ -326,8 +285,8 @@ const DriverDashboard: React.FC = () => {
             if (res.data.driverLocation?.coordinates) {
               setCurrentLocation(res.data.driverLocation.coordinates);
               setMapCenter({
-                lat: res.data.driverLocation.coordinates[0],
-                lng: res.data.driverLocation.coordinates[1],
+                lat: res.data.driverLocation.coordinates[1],
+                lng: res.data.driverLocation.coordinates[0],
               });
             }
           } else {
@@ -398,7 +357,6 @@ const DriverDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 mt-20 mb-20 lg:max-w-7xl mx-auto px-4">
-      {/* Driver Profile Card */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center space-x-4">
           <div className="p-3 bg-orange-100 rounded-full">
@@ -442,7 +400,6 @@ const DriverDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Location Information Card */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
@@ -453,9 +410,9 @@ const DriverDashboard: React.FC = () => {
               <h2 className="text-xl font-semibold">Location Information</h2>
               <p className="text-gray-600">
                 {currentLocation
-                  ? `Current Location: Long: ${currentLocation[0].toFixed(
+                  ? `Current Location: Lat: ${currentLocation[1].toFixed(
                       4
-                    )}, Lat: ${currentLocation[1].toFixed(4)}`
+                    )}, Long: ${currentLocation[0].toFixed(4)}`
                   : "Location not set"}
               </p>
             </div>
@@ -481,8 +438,19 @@ const DriverDashboard: React.FC = () => {
               {currentLocation && (
                 <Marker
                   position={{
-                    lat: currentLocation[1], // Use latitude from stored location
-                    lng: currentLocation[0], // Use longitude from stored location
+                    lat: currentLocation[1],
+                    lng: currentLocation[0],
+                  }}
+                />
+              )}
+              {customerLocation && (
+                <Marker
+                  position={{
+                    lat: customerLocation[1],
+                    lng: customerLocation[0],
+                  }}
+                  icon={{
+                    url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
                   }}
                 />
               )}
@@ -491,7 +459,6 @@ const DriverDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Status Toggle Card */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -524,7 +491,6 @@ const DriverDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Active Delivery Card */}
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex items-center space-x-4 mb-4">
           <div className="p-3 bg-purple-100 rounded-full">
@@ -573,7 +539,7 @@ const DriverDashboard: React.FC = () => {
                   <p className="text-gray-600">
                     <span className="font-medium">Customer Location:</span>{" "}
                     <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${customerLocation[0]},${customerLocation[1]}`}
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${customerLocation[1]},${customerLocation[0]}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-500 hover:underline"
@@ -592,7 +558,6 @@ const DriverDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {driver?.currentDelivery && (
           <button
@@ -613,7 +578,6 @@ const DriverDashboard: React.FC = () => {
         </button>
       </div>
 
-      {/* Order Details Modal */}
       {orderDetails && (
         <OrderDetailsModal
           isOpen={showOrderDetails}
@@ -650,7 +614,6 @@ const DriverDashboard: React.FC = () => {
         </OrderDetailsModal>
       )}
 
-      {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg">
         <div className="flex justify-around p-4">
           <button className="flex flex-col items-center space-y-1">
