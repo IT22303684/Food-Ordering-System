@@ -633,7 +633,7 @@ const Order: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <FaClock className="text-orange-500 mr-3" />
-              <div>
+    <div>
                 <h3 className="font-medium">Estimated Delivery Time</h3>
                 <p className="text-sm text-gray-500">
                   {order.estimatedDeliveryTime}

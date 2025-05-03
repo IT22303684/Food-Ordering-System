@@ -53,6 +53,10 @@ const Checkout: React.FC = () => {
     expiryDate: "",
     cvv: "",
   });
+  const [showDriverFoundModal, setShowDriverFoundModal] = useState(false);
+  const [driverFoundOrderId, setDriverFoundOrderId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchDefaultAddress = async () => {
@@ -89,28 +93,74 @@ const Checkout: React.FC = () => {
   }, [paymentMethod]);
 
   useEffect(() => {
+    console.log("Delivery location updated:", deliveryLocation);
+  }, [deliveryLocation]);
+
+  useEffect(() => {
     const getCurrentLocation = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const newLocation: [number, number] = [
-              position.coords.latitude,
+            // For MongoDB: [longitude, latitude]
+            const dbLocation: [number, number] = [
               position.coords.longitude,
+              position.coords.latitude,
             ];
-            setDeliveryLocation(newLocation);
-            setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+            handleLocationUpdate(dbLocation);
           },
           (error) => {
             toast.error("Failed to get location");
             console.error("Geolocation error:", error);
-          }
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
         );
       } else {
         toast.error("Geolocation is not supported by your browser");
       }
     };
+
+    console.log("Getting current location on mount");
     getCurrentLocation();
   }, []);
+
+  const handleLocationUpdate = async (dbLocation: [number, number]) => {
+    try {
+      console.log("Handling location update:", dbLocation);
+      setDeliveryLocation(dbLocation);
+      setMapCenter({
+        lat: dbLocation[1], // latitude is second in MongoDB format
+        lng: dbLocation[0], // longitude is first in MongoDB format
+      });
+
+      // If there's a pending order, try to assign a driver with the new location
+      if (pendingOrderId) {
+        console.log(
+          "Trying to assign driver with new location for order:",
+          pendingOrderId
+        );
+        const deliveryResponse = await assignDeliveryDriver(
+          pendingOrderId,
+          dbLocation // Already in MongoDB format [longitude, latitude]
+        );
+
+        if (deliveryResponse.status === "success") {
+          console.log("Driver found in new location!");
+          setShowNoDriversModal(false);
+          setDriverFoundOrderId(pendingOrderId);
+          setShowDriverFoundModal(true);
+          toast.success("Driver found in the new location!");
+        } else if (
+          deliveryResponse.message === "No available drivers found in the area"
+        ) {
+          console.log("No drivers available in new location");
+          toast.warning("No drivers available in the new location yet");
+        }
+      }
+    } catch (error) {
+      console.error("Error updating location:", error);
+      toast.error("Failed to update location");
+    }
+  };
 
   const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -130,9 +180,9 @@ const Checkout: React.FC = () => {
 
   const handleMapClick = (e: google.maps.MapMouseEvent) => {
     if (e.latLng) {
-      const location: [number, number] = [e.latLng.lat(), e.latLng.lng()];
-      setDeliveryLocation(location);
-      setMapCenter({ lat: location[0], lng: location[1] });
+      // For MongoDB: [longitude, latitude]
+      const dbLocation: [number, number] = [e.latLng.lng(), e.latLng.lat()];
+      handleLocationUpdate(dbLocation);
     }
   };
 
@@ -290,7 +340,6 @@ const Checkout: React.FC = () => {
         throw new Error("Order creation failed - no order ID received");
       }
 
-      // Verify order
       await new Promise((resolve) => setTimeout(resolve, 1000));
       const verifiedOrder = await getOrderById(order._id);
       console.log("Verified order:", verifiedOrder);
@@ -298,13 +347,17 @@ const Checkout: React.FC = () => {
         throw new Error("Order not found in database");
       }
 
-      // Assign delivery driver
       try {
         const formattedLocation: [number, number] = [
           deliveryLocation[0],
           deliveryLocation[1],
         ];
-        console.log("Assigning driver for order:", order._id, "Location:", formattedLocation);
+        console.log(
+          "Assigning driver for order:",
+          order._id,
+          "Location:",
+          formattedLocation
+        );
         const deliveryResponse = await assignDeliveryDriver(
           order._id,
           formattedLocation
@@ -328,8 +381,10 @@ const Checkout: React.FC = () => {
           );
         }
 
-        // Proceed with payment or order confirmation
-        console.log("Driver assigned, proceeding with payment. Payment method:", paymentMethod);
+        console.log(
+          "Driver assigned, proceeding with payment. Payment method:",
+          paymentMethod
+        );
         if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
           console.log("Initiating card payment for order:", order._id);
           await handleCardPayment(order._id, cartId!);
@@ -398,12 +453,48 @@ const Checkout: React.FC = () => {
     setLoading(false);
   };
 
+  const handleDriverFoundConfirm = async () => {
+    if (!driverFoundOrderId) return;
+
+    try {
+      if (paymentMethod === "CREDIT_CARD" || paymentMethod === "DEBIT_CARD") {
+        await handleCardPayment(driverFoundOrderId, cartId!);
+      } else {
+        await updateOrderStatus(driverFoundOrderId, "CONFIRMED");
+        await clearCartItems();
+        toast.success("Order placed successfully!");
+        navigate("/orders");
+      }
+    } catch (error) {
+      console.error("Error processing order:", error);
+      toast.error("Failed to process order");
+    } finally {
+      setShowDriverFoundModal(false);
+      setDriverFoundOrderId(null);
+      setPendingOrderId(null);
+    }
+  };
+
+  const handleDriverFoundCancel = () => {
+    setShowDriverFoundModal(false);
+    setDriverFoundOrderId(null);
+    setPendingOrderId(null);
+    toast.info("Order placement cancelled");
+  };
+
+  // const getDisplayLocation = () => {
+  //   if (!deliveryLocation) return null;
+  //   return {
+  //     lat: deliveryLocation[1],
+  //     lng: deliveryLocation[0],
+  //   };
+  // };
+
   return (
     <div className="container mx-auto px-4 py-8 min-h-screen">
       <h1 className="text-2xl font-bold mb-6">Checkout</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Order Summary */}
         <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
           <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
           <div className="max-h-[400px] overflow-y-auto">
@@ -424,7 +515,6 @@ const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* Delivery Address and Payment Form */}
         <div className="bg-white p-6 rounded-lg shadow-md overflow-hidden">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Delivery Location</h2>
@@ -434,16 +524,16 @@ const Checkout: React.FC = () => {
                   navigator.geolocation.getCurrentPosition(
                     (position) => {
                       const newLocation: [number, number] = [
-                        position.coords.latitude,
                         position.coords.longitude,
+                        position.coords.latitude,
                       ];
-                      setDeliveryLocation(newLocation);
-                      setMapCenter({ lat: newLocation[0], lng: newLocation[1] });
+                      handleLocationUpdate(newLocation);
                     },
                     (error) => {
                       toast.error("Failed to get location");
                       console.error("Geolocation error:", error);
-                    }
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
                   );
                 } else {
                   toast.error("Geolocation is not supported by your browser");
@@ -477,8 +567,8 @@ const Checkout: React.FC = () => {
                 {deliveryLocation && (
                   <Marker
                     position={{
-                      lat: deliveryLocation[0],
-                      lng: deliveryLocation[1],
+                      lat: deliveryLocation[1],
+                      lng: deliveryLocation[0],
                     }}
                     icon={{
                       url: "https://maps.google.com/mapfiles/ms/icons/red-dot.png",
@@ -499,8 +589,8 @@ const Checkout: React.FC = () => {
                 Selected Location:
               </p>
               <p className="text-sm text-gray-600">
-                Lat: {deliveryLocation[0].toFixed(4)}, Long:{" "}
-                {deliveryLocation[1].toFixed(4)}
+                Lat: {deliveryLocation[1].toFixed(4)}, Long:{" "}
+                {deliveryLocation[0].toFixed(4)}
               </p>
             </div>
           )}
@@ -754,6 +844,16 @@ const Checkout: React.FC = () => {
         message="No delivery drivers are currently available in your area. You can place your order and wait for the driver to be assigned. Please contact support for assistance."
         confirmText="Continue to Order"
         cancelText="Stay on Page"
+      />
+
+      <Modal
+        isOpen={showDriverFoundModal}
+        onClose={handleDriverFoundCancel}
+        onConfirm={handleDriverFoundConfirm}
+        title="Driver Found!"
+        message="A delivery driver is now available in your area. Would you like to proceed with placing your order?"
+        confirmText="Place Order"
+        cancelText="Cancel"
       />
     </div>
   );
